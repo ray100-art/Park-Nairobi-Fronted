@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ParkNairobi – Find Parking</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet">
+    <style>
+        :root {
+            --gold:#F5C842; --black:#0A0A0F; --surface:#111118; --surface2:#1A1A24;
+            --border:#2a2a38; --text:#F0EDE8; --muted:#7A7A90;
+            --green:#22c55e; --red:#ef4444; --orange:#f97316;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'DM Sans',sans-serif; background:var(--black); color:var(--text); height:100vh; display:flex; flex-direction:column; overflow:hidden; }
+
+        /* Navbar */
+        .navbar { height:60px; background:var(--surface); border-bottom:1px solid var(--border); display:flex; align-items:center; padding:0 20px; gap:12px; flex-shrink:0; position:relative; z-index:100; }
+        .nav-brand { display:flex; align-items:center; gap:10px; text-decoration:none; }
+        .nav-p { width:36px; height:36px; background:var(--gold); border-radius:9px; display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-weight:800; font-size:1.1rem; color:var(--black); }
+        .nav-title { font-family:'Syne',sans-serif; font-weight:700; font-size:1rem; color:var(--text); }
+        .nav-title span { color:var(--gold); }
+        .nav-spacer { flex:1; }
+        .nav-search { display:flex; align-items:center; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:6px 12px; gap:8px; width:220px; }
+        .nav-search input { background:none; border:none; outline:none; color:var(--text); font-family:'DM Sans',sans-serif; font-size:0.85rem; width:100%; }
+        .nav-search input::placeholder { color:var(--muted); }
+        .nav-btn { height:36px; padding:0 14px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--text); font-family:'DM Sans',sans-serif; font-size:0.83rem; cursor:pointer; display:flex; align-items:center; gap:6px; transition:all 0.2s; text-decoration:none; }
+        .nav-btn:hover { border-color:var(--gold); color:var(--gold); }
+        .nav-btn.gold { background:var(--gold); color:var(--black); border-color:var(--gold); font-weight:600; }
+        .nav-btn.gold:hover { background:#e8b830; }
+        .nav-user { display:flex; align-items:center; gap:8px; padding:4px 10px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; }
+        .nav-avatar { width:28px; height:28px; background:var(--gold); border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-weight:700; font-size:0.75rem; color:var(--black); }
+        .nav-username { font-size:0.83rem; color:var(--text); }
+
+        /* Layout */
+        .main { flex:1; display:flex; overflow:hidden; }
+
+        /* Sidebar */
+        .sidebar { width:320px; background:var(--surface); border-right:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; flex-shrink:0; }
+        .sidebar-header { padding:14px; border-bottom:1px solid var(--border); flex-shrink:0; }
+        .sidebar-title { font-family:'Syne',sans-serif; font-weight:700; font-size:0.88rem; color:var(--text); margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; }
+
+        .stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:10px; }
+        .stat-chip { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:8px; text-align:center; cursor:pointer; transition:all 0.2s; }
+        .stat-chip:hover { border-color:var(--gold); }
+        .stat-chip.free { border-color:rgba(34,197,94,0.3); }
+        .stat-chip.occ  { border-color:rgba(239,68,68,0.3); }
+        .stat-chip.res  { border-color:rgba(249,115,22,0.3); }
+        .stat-chip .num { font-family:'Syne',sans-serif; font-weight:700; font-size:1.3rem; line-height:1; }
+        .stat-chip .lbl { font-size:0.65rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-top:3px; }
+        .stat-chip.free .num { color:var(--green); }
+        .stat-chip.occ  .num { color:var(--red); }
+        .stat-chip.res  .num { color:var(--orange); }
+
+        .filter-row { display:flex; gap:6px; }
+        .search-btn { padding:8px 12px; background:var(--gold); border:none; border-radius:8px; color:var(--black); font-weight:600; font-size:0.82rem; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s; white-space:nowrap; flex:1; justify-content:center; }
+        .search-btn:hover { background:#e8b830; }
+        .search-btn.ghost { background:var(--surface2); color:var(--text); border:1px solid var(--border); }
+        .search-btn.ghost:hover { border-color:var(--gold); }
+
+        /* Slot list */
+        .slot-list { flex:1; overflow-y:auto; padding:10px; }
+        .slot-list::-webkit-scrollbar { width:4px; }
+        .slot-list::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+
+        .slot-item { background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:12px; margin-bottom:8px; cursor:pointer; transition:all 0.2s; position:relative; overflow:hidden; }
+        .slot-item::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--border); transition:background 0.2s; }
+        .slot-item.free::before     { background:var(--green); }
+        .slot-item.occupied::before { background:var(--red); }
+        .slot-item.reserved::before { background:var(--orange); }
+        .slot-item:hover { border-color:var(--gold); transform:translateX(2px); }
+        .slot-item.occupied { opacity:0.55; cursor:default; }
+        .slot-item.occupied:hover { transform:none; border-color:var(--border); }
+        .slot-item.reserved { opacity:0.7; cursor:default; }
+        .slot-item.reserved:hover { transform:none; border-color:var(--border); }
+
+        .slot-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px; }
+        .slot-id { font-family:'Syne',sans-serif; font-weight:700; font-size:0.95rem; color:var(--text); }
+        .slot-badge { font-size:0.65rem; padding:2px 8px; border-radius:20px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; }
+        .badge-free     { background:rgba(34,197,94,0.15);  color:var(--green); }
+        .badge-occupied { background:rgba(239,68,68,0.15);  color:var(--red); }
+        .badge-reserved { background:rgba(249,115,22,0.15); color:var(--orange); }
+        .slot-meta { font-size:0.75rem; color:var(--muted); display:flex; align-items:center; gap:10px; }
+        .slot-meta span { display:flex; align-items:center; gap:3px; }
+        .book-btn { width:100%; margin-top:8px; padding:7px; background:var(--gold); border:none; border-radius:7px; color:var(--black); font-family:'DM Sans',sans-serif; font-weight:600; font-size:0.8rem; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:5px; }
+        .book-btn:hover { background:#e8b830; }
+
+        /* Map */
+        .map-area { flex:1; position:relative; }
+        #map { width:100%; height:100%; }
+        .map-overlay { position:absolute; top:16px; right:16px; z-index:500; display:flex; flex-direction:column; gap:8px; }
+        .map-pill { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:8px 14px; font-size:0.78rem; color:var(--muted); display:flex; align-items:center; gap:6px; }
+        .map-pill i { color:var(--gold); }
+
+        /* Loading */
+        .loading-state { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 20px; color:var(--muted); }
+        .spinner { width:28px; height:28px; border:2px solid var(--border); border-top-color:var(--gold); border-radius:50%; animation:spin 0.7s linear infinite; margin-bottom:10px; }
+        @keyframes spin { to { transform:rotate(360deg); } }
+        .slot-count { font-size:0.75rem; color:var(--muted); padding:0 2px 8px; }
+
+        /* Modal */
+        .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:9999; display:none; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
+        .modal-overlay.show { display:flex; }
+        .modal-box { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:28px; width:420px; max-width:95vw; position:relative; animation:modalIn 0.25s ease; }
+        @keyframes modalIn { from { opacity:0; transform:scale(0.95) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
+        .modal-box::before { content:''; position:absolute; top:0; left:20px; right:20px; height:2px; background:linear-gradient(90deg,transparent,var(--gold),transparent); border-radius:2px; }
+        .modal-title { font-family:'Syne',sans-serif; font-size:1.3rem; font-weight:700; color:var(--text); margin-bottom:4px; }
+        .modal-sub { color:var(--muted); font-size:0.85rem; margin-bottom:24px; }
+        .modal-field { margin-bottom:16px; }
+        .modal-field label { display:block; font-size:0.75rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.8px; margin-bottom:7px; font-weight:500; }
+        .modal-field input { width:100%; padding:12px 14px; background:var(--surface2); border:1px solid var(--border); border-radius:9px; color:var(--text); font-family:'DM Sans',sans-serif; font-size:0.95rem; outline:none; transition:border-color 0.2s; }
+        .modal-field input:focus { border-color:var(--gold); }
+        .modal-field input::placeholder { color:#3a3a50; }
+        .modal-info { background:var(--surface2); border:1px solid var(--border); border-radius:9px; padding:12px 14px; font-size:0.82rem; color:var(--muted); margin-bottom:20px; display:flex; gap:8px; align-items:flex-start; }
+        .modal-info i { color:var(--gold); margin-top:1px; flex-shrink:0; }
+        .modal-actions { display:flex; gap:10px; }
+        .btn-cancel { flex:1; padding:12px; background:transparent; border:1px solid var(--border); border-radius:9px; color:var(--muted); font-family:'DM Sans',sans-serif; font-size:0.9rem; cursor:pointer; transition:all 0.2s; }
+        .btn-cancel:hover { border-color:var(--text); color:var(--text); }
+        .btn-confirm { flex:2; padding:12px; background:var(--gold); border:none; border-radius:9px; color:var(--black); font-family:'Syne',sans-serif; font-size:0.95rem; font-weight:700; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:6px; }
+        .btn-confirm:hover { background:#e8b830; }
+        .modal-alert { padding:10px 14px; border-radius:8px; font-size:0.85rem; margin-bottom:14px; display:none; }
+        .modal-alert.error { background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); color:#ff6b7a; display:flex; gap:8px; align-items:center; }
+
+        /* Toast */
+        .toast-container { position:fixed; bottom:24px; right:24px; z-index:99999; display:flex; flex-direction:column; gap:8px; }
+        .toast { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 16px; font-size:0.88rem; color:var(--text); display:flex; align-items:center; gap:10px; min-width:280px; animation:toastIn 0.3s ease; box-shadow:0 8px 32px rgba(0,0,0,0.4); }
+        .toast.success { border-left:3px solid var(--green); }
+        .toast.error   { border-left:3px solid var(--red); }
+        @keyframes toastIn { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
+
+        /* Leaflet dark */
+        .leaflet-popup-content-wrapper { background:var(--surface)!important; color:var(--text)!important; border:1px solid var(--border)!important; border-radius:10px!important; box-shadow:0 8px 32px rgba(0,0,0,0.5)!important; }
+        .leaflet-popup-tip { background:var(--surface)!important; }
+        .leaflet-popup-close-button { color:var(--muted)!important; }
+        .leaflet-control-zoom a { background:var(--surface)!important; color:var(--text)!important; border-color:var(--border)!important; }
+        .leaflet-control-attribution { background:rgba(10,10,15,0.8)!important; color:var(--muted)!important; }
+
+        @media(max-width:768px) { .sidebar { width:100%; height:40vh; } .main { flex-direction:column; } .nav-search { display:none; } }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <a href="index.html" class="nav-brand">
+        <div class="nav-p">P</div>
+        <div class="nav-title">Park<span>Nairobi</span></div>
+    </a>
+    <div class="nav-spacer"></div>
+    <div class="nav-search">
+        <i class="bi bi-search"></i>
+        <input type="text" placeholder="Search slots or area..." id="searchInput" oninput="filterSlots(this.value)">
+    </div>
+    <a href="bookings.html" class="nav-btn gold">
+        <i class="bi bi-calendar-check"></i> My Bookings
+    </a>
+    <a href="profile.html" class="nav-user" style="text-decoration:none;cursor:pointer" title="My Profile">
+        <div class="nav-avatar" id="navAvatar">?</div>
+        <span class="nav-username" id="navUsername">Driver</span>
+    </a>
+    <button class="nav-btn" onclick="logout()" style="border-color:rgba(239,68,68,0.3);color:#ef4444">
+        <i class="bi bi-box-arrow-right"></i>
+    </button>
+</nav>
+
+<div class="main">
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-title">
+                <span>Nearby Slots</span>
+                <span id="refreshTime" style="font-size:0.68rem;color:var(--muted);font-weight:400"></span>
+            </div>
+
+            <!-- Radius slider -->
+            <div style="margin-bottom:10px">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                    <span style="font-size:0.75rem;color:var(--muted)"><i class="bi bi-geo-alt-fill" style="color:var(--gold)"></i> Search radius</span>
+                    <span style="font-size:0.82rem;font-family:'Syne',sans-serif;font-weight:700;color:var(--gold)" id="radiusLabel">5 km</span>
+                </div>
+                <input type="range" id="radiusSlider" min="1" max="100" value="5" step="1"
+                    style="width:100%;accent-color:var(--gold);cursor:pointer"
+                    oninput="onRadiusChange(this.value)">
+                <div style="display:flex;justify-content:space-between;font-size:0.68rem;color:var(--muted);margin-top:2px">
+                    <span>1 km</span><span>50 km</span><span>100 km</span>
+                </div>
+            </div>
+
+            <!-- Location status -->
+            <div id="locationStatus" style="font-size:0.75rem;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:5px">
+                <i class="bi bi-hourglass-split"></i> Getting your location...
+            </div>
+
+            <!-- Status filter chips -->
+            <div class="stats-row">
+                <div class="stat-chip free" onclick="filterByStatus('FREE')">
+                    <div class="num" id="statFree">–</div>
+                    <div class="lbl">Free</div>
+                </div>
+                <div class="stat-chip occ" onclick="filterByStatus('OCCUPIED')">
+                    <div class="num" id="statOcc">–</div>
+                    <div class="lbl">Taken</div>
+                </div>
+                <div class="stat-chip res" onclick="filterByStatus('RESERVED')">
+                    <div class="num" id="statRes">–</div>
+                    <div class="lbl">Reserved</div>
+                </div>
+            </div>
+            <div class="filter-row">
+                <button class="search-btn" onclick="searchNearby()">
+                    <i class="bi bi-search"></i> Search
+                </button>
+                <button class="search-btn ghost" onclick="filterByStatus('ALL')" title="Show all statuses">
+                    <i class="bi bi-grid"></i> All
+                </button>
+            </div>
+        </div>
+        <div class="slot-list" id="slotList">
+            <div class="loading-state">
+                <div class="spinner"></div>
+                <span style="font-size:0.85rem">Loading slots...</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="map-area">
+        <div id="map"></div>
+        <div class="map-overlay">
+            <div class="map-pill">
+                <i class="bi bi-geo-alt-fill" style="color:var(--gold)"></i>
+                <span id="locationLabel">Locating...</span>
+            </div>
+            <div class="map-pill" style="cursor:pointer" onclick="searchNearby()">
+                <i class="bi bi-arrow-clockwise"></i>
+                <span>Refresh</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Book Modal -->
+<div class="modal-overlay" id="bookModal">
+    <div class="modal-box">
+        <div class="modal-title">
+            <i class="bi bi-p-square-fill" style="color:var(--gold);margin-right:8px"></i>
+            Book Slot <span id="modalSlotId" style="color:var(--gold)"></span>
+        </div>
+        <div class="modal-sub" id="modalSlotArea">Reserve your spot now</div>
+        <div class="modal-alert" id="modalAlert">
+            <i class="bi bi-exclamation-circle"></i>
+            <span id="modalAlertText"></span>
+        </div>
+
+        <!-- Step 1: Vehicle plate -->
+        <div id="step1">
+            <div class="modal-field">
+                <label>Vehicle Plate Number</label>
+                <input type="text" id="vehiclePlate" placeholder="e.g. KCA 123A"
+                       onkeydown="if(event.key==='Enter') goToPayment()">
+            </div>
+            <div class="modal-info">
+                <i class="bi bi-info-circle-fill"></i>
+                <span>Your reservation holds the slot for <strong style="color:var(--text)">15 minutes</strong>. Please arrive before it expires.</span>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+                <button class="btn-confirm" onclick="goToPayment()">
+                    <i class="bi bi-arrow-right-circle"></i> Next — Pay with M-Pesa
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 2: M-Pesa payment -->
+        <div id="step2" style="display:none">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;padding:14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/M-PESA_LOGO-01.svg/200px-M-PESA_LOGO-01.svg.png"
+                     style="height:32px;object-fit:contain" alt="M-Pesa">
+                <div>
+                    <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.9rem">M-Pesa STK Push</div>
+                    <div style="font-size:0.75rem;color:var(--muted)">A prompt will be sent to your phone</div>
+                </div>
+            </div>
+            <div class="modal-field">
+                <label>M-Pesa Phone Number</label>
+                <input type="tel" id="mpesaPhone" placeholder="e.g. 0712345678"
+                       onkeydown="if(event.key==='Enter') confirmBooking()">
+            </div>
+            <div class="modal-info">
+                <i class="bi bi-shield-check-fill" style="color:var(--green)"></i>
+                <span>Enter your <strong style="color:var(--text)">Safaricom number</strong>. You'll get an M-Pesa prompt to complete payment.</span>
+            </div>
+            <!-- Polling status -->
+            <div id="mpesaStatus" style="display:none;padding:12px 14px;border-radius:9px;font-size:0.85rem;margin-bottom:14px;background:rgba(245,200,66,0.08);border:1px solid rgba(245,200,66,0.2);color:var(--gold);display:none;align-items:center;gap:8px">
+                <span style="width:14px;height:14px;border:2px solid rgba(245,200,66,0.3);border-top-color:var(--gold);border-radius:50%;display:inline-block;animation:spin 0.7s linear infinite;flex-shrink:0"></span>
+                <span id="mpesaStatusText">Waiting for payment...</span>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="backToStep1()">← Back</button>
+                <button class="btn-confirm" id="confirmBtn" onclick="confirmBooking()">
+                    <i class="bi bi-phone-fill"></i> Send M-Pesa Prompt
+                </button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Scripts -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="js/api.js"></script>
+<script>
+    let map, markers = [], radiusCircle = null, allSlots = [], selectedSlot = null;
+    let userLat = -1.2864, userLon = 36.8172;
+    let currentFilter = 'ALL';
+    let currentRadius = 5;
+    let locationReady = false;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if (!getToken()) { window.location.href = 'index.html'; return; }
+        const user = getUser();
+        if (user) {
+            document.getElementById('navAvatar').textContent   = (user.fullName || 'D').charAt(0).toUpperCase();
+            document.getElementById('navUsername').textContent = user.fullName || 'Driver';
+        }
+        initMap();
+        getLocation();
+    });
+
+    function initMap() {
+        map = L.map('map', { zoomControl: true }).setView([userLat, userLon], 7);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '© OpenStreetMap © CARTO', maxZoom: 19
+        }).addTo(map);
+    }
+
+    function getLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(pos => {
+                userLat = pos.coords.latitude;
+                userLon = pos.coords.longitude;
+                locationReady = true;
+                map.setView([userLat, userLon], 13);
+                addUserMarker();
+                document.getElementById('locationLabel').textContent = 'Your location';
+                document.getElementById('locationStatus').innerHTML =
+                    '<i class="bi bi-check-circle-fill" style="color:var(--green)"></i> Location found — showing nearby slots';
+                searchNearby();
+            }, () => {
+                locationReady = true; // use default Nairobi coords
+                addUserMarker();
+                document.getElementById('locationLabel').textContent = 'Nairobi (default)';
+                document.getElementById('locationStatus').innerHTML =
+                    '<i class="bi bi-exclamation-triangle-fill" style="color:var(--orange)"></i> Location denied — using Nairobi centre';
+                searchNearby();
+            });
+        } else {
+            locationReady = true;
+            addUserMarker();
+            document.getElementById('locationStatus').innerHTML =
+                '<i class="bi bi-geo-alt-fill" style="color:var(--gold)"></i> Using Nairobi (no GPS)';
+            searchNearby();
+        }
+    }
+
+    function addUserMarker() {
+        const html = `<div style="width:16px;height:16px;background:#F5C842;border-radius:50%;border:3px solid white;box-shadow:0 0 0 4px rgba(245,200,66,0.3)"></div>`;
+        L.marker([userLat, userLon], {
+            icon: L.divIcon({ html, className:'', iconSize:[16,16], iconAnchor:[8,8] }),
+            zIndexOffset: 1000
+        }).addTo(map).bindPopup('<b style="color:#F5C842">📍 You are here</b>');
+    }
+
+    // ── Radius slider ─────────────────────────────
+    function onRadiusChange(value) {
+        currentRadius = parseInt(value);
+        document.getElementById('radiusLabel').textContent = currentRadius + ' km';
+        // Update the circle on the map in real time
+        drawRadiusCircle();
+    }
+
+    function drawRadiusCircle() {
+        if (radiusCircle) { map.removeLayer(radiusCircle); }
+        radiusCircle = L.circle([userLat, userLon], {
+            radius: currentRadius * 1000,
+            color: '#F5C842',
+            fillColor: '#F5C842',
+            fillOpacity: 0.05,
+            weight: 1.5,
+            dashArray: '6,4'
+        }).addTo(map);
+        // Fit map to circle bounds
+        map.fitBounds(radiusCircle.getBounds(), { padding: [20, 20] });
+    }
+
+    // ── Main search ───────────────────────────────
+    async function searchNearby() {
+        const list = document.getElementById('slotList');
+        list.innerHTML = `<div class="loading-state"><div class="spinner"></div><span style="font-size:0.85rem">Searching within ${currentRadius} km...</span></div>`;
+        drawRadiusCircle();
+
+        try {
+            const url = `http://localhost:8080/api/slots/nearby?lat=${userLat}&lon=${userLon}&radius=${currentRadius}`;
+            const r   = await fetch(url);
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            allSlots = await r.json();
+
+            // Update summary chips from this result set
+            document.getElementById('statFree').textContent = allSlots.filter(s => s.status === 'FREE').length;
+            document.getElementById('statOcc').textContent  = allSlots.filter(s => s.status === 'OCCUPIED').length;
+            document.getElementById('statRes').textContent  = allSlots.filter(s => s.status === 'RESERVED').length;
+            document.getElementById('refreshTime').textContent =
+                new Date().toLocaleTimeString('en-KE', { hour:'2-digit', minute:'2-digit' });
+
+            renderSlots(filterByCurrentStatus(allSlots));
+            renderMarkers(allSlots);
+        } catch(err) {
+            list.innerHTML = `<div class="loading-state">
+                <i class="bi bi-wifi-off" style="font-size:2rem;color:var(--red);margin-bottom:8px"></i>
+                <span style="font-size:0.85rem;color:var(--red)">Cannot connect to server</span>
+                <button onclick="searchNearby()" style="margin-top:10px;padding:6px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);cursor:pointer;font-size:0.8rem">Retry</button>
+            </div>`;
+        }
+    }
+
+    function filterByCurrentStatus(slots) {
+        return currentFilter === 'ALL' ? slots : slots.filter(s => s.status === currentFilter);
+    }
+
+    function filterByStatus(status) {
+        currentFilter = status;
+        renderSlots(filterByCurrentStatus(allSlots));
+    }
+
+    function renderSlots(slots) {
+        const list = document.getElementById('slotList');
+        if (!slots || !slots.length) {
+            list.innerHTML = `<div class="loading-state">
+                <i class="bi bi-search" style="font-size:2rem;color:var(--muted);margin-bottom:8px"></i>
+                <span style="font-size:0.85rem">No slots within ${currentRadius} km</span>
+                <span style="font-size:0.75rem;color:var(--muted);margin-top:4px">Try increasing the radius</span>
+            </div>`;
+            return;
+        }
+        // Already sorted by distanceKm from backend — FREE slots first within same distance
+        const sorted = [...slots.filter(s => s.status === 'FREE'), ...slots.filter(s => s.status !== 'FREE')];
+        list.innerHTML = `<div class="slot-count">${sorted.length} slot${sorted.length !== 1 ? 's' : ''} within ${currentRadius} km</div>` +
+            sorted.map(slot => {
+                const st   = slot.status.toLowerCase();
+                const sid  = slot.slotId.replace(/'/g, "\\'");
+                const san  = (slot.parkingAreaName || '').replace(/'/g, "\\'");
+                const dist = slot.distanceKm != null ? `<span><i class="bi bi-geo-alt"></i>${slot.distanceKm} km</span>` : '';
+                return `
+                <div class="slot-item ${st}" onclick="${slot.status==='FREE' ? `openBookModal('${sid}','${san}')` : ''}">
+                    <div class="slot-top">
+                        <div class="slot-id">${slot.slotId}</div>
+                        <span class="slot-badge badge-${st}">${slot.status}</span>
+                    </div>
+                    <div class="slot-meta">
+                        <span><i class="bi bi-building"></i>${slot.parkingAreaName || 'Parking'}</span>
+                        ${dist}
+                    </div>
+                    ${slot.status === 'FREE' ? `
+                    <button class="book-btn" onclick="event.stopPropagation(); openBookModal('${sid}','${san}')">
+                        <i class="bi bi-p-square"></i> Book Now
+                    </button>` : ''}
+                </div>`;
+            }).join('');
+    }
+
+    function renderMarkers(slots) {
+        markers.forEach(m => map.removeLayer(m));
+        markers = [];
+        slots.forEach(slot => {
+            if (!slot.latitude || !slot.longitude) return;
+            const color = slot.status === 'FREE' ? '#22c55e' : slot.status === 'OCCUPIED' ? '#ef4444' : '#f97316';
+            const html  = `<div style="background:${color};color:white;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:700;font-family:'Syne',sans-serif;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.5)">${slot.slotId}</div>`;
+            const sid   = slot.slotId.replace(/'/g, "\\'");
+            const san   = (slot.parkingAreaName || '').replace(/'/g, "\\'");
+            const dist  = slot.distanceKm != null ? `<div style="color:#9a9ab0;font-size:0.78rem;margin-bottom:8px">📏 ${slot.distanceKm} km away</div>` : '';
+            const popup = `<div style="min-width:150px;padding:4px 0">
+                <div style="font-family:'Syne',sans-serif;font-weight:700;color:#F5C842;font-size:1rem;margin-bottom:4px">${slot.slotId}</div>
+                <div style="color:#9a9ab0;font-size:0.78rem;margin-bottom:2px">📍 ${slot.parkingAreaName || ''}</div>
+                ${dist}
+                <div style="color:${color};font-weight:600;font-size:0.82rem;margin-bottom:${slot.status==='FREE'?'10px':'0'}">${slot.status}</div>
+                ${slot.status === 'FREE' ? `<button onclick="openBookModal('${sid}','${san}')"
+                    style="width:100%;padding:7px;background:#F5C842;border:none;border-radius:7px;font-weight:700;cursor:pointer;font-size:0.82rem;font-family:'Syne',sans-serif">
+                    Book Now</button>` : ''}
+            </div>`;
+            const marker = L.marker([slot.latitude, slot.longitude], {
+                icon: L.divIcon({ html, className:'', iconAnchor:[20,12] })
+            }).addTo(map).bindPopup(popup);
+            markers.push(marker);
+        });
+    }
+
+    function openBookModal(slotId, areaName) {
+        selectedSlot = slotId;
+        document.getElementById('modalSlotId').textContent   = slotId;
+        document.getElementById('modalSlotArea').textContent = areaName || 'Reserve your spot';
+        document.getElementById('vehiclePlate').value        = '';
+        document.getElementById('mpesaPhone').value          = '';
+        document.getElementById('modalAlert').className      = 'modal-alert';
+        document.getElementById('mpesaStatus').style.display = 'none';
+        // Always start on step 1
+        document.getElementById('step1').style.display = 'block';
+        document.getElementById('step2').style.display = 'none';
+        document.getElementById('bookModal').classList.add('show');
+        setTimeout(() => document.getElementById('vehiclePlate').focus(), 100);
+    }
+
+    function closeModal() {
+        document.getElementById('bookModal').classList.remove('show');
+    }
+
+    function goToPayment() {
+        const plate = document.getElementById('vehiclePlate').value.trim().toUpperCase();
+        if (!plate) {
+            document.getElementById('modalAlert').className = 'modal-alert error';
+            document.getElementById('modalAlertText').textContent = 'Please enter your vehicle plate number';
+            return;
+        }
+        document.getElementById('modalAlert').className = 'modal-alert';
+        document.getElementById('step1').style.display = 'none';
+        document.getElementById('step2').style.display = 'block';
+        // Pre-fill phone from profile if available
+        const user = getUser();
+        if (user && user.phone) {
+            document.getElementById('mpesaPhone').value = user.phone;
+        }
+        setTimeout(() => document.getElementById('mpesaPhone').focus(), 100);
+    }
+
+    function backToStep1() {
+        document.getElementById('step2').style.display = 'none';
+        document.getElementById('step1').style.display = 'block';
+        document.getElementById('modalAlert').className = 'modal-alert';
+    }
+
+    document.getElementById('bookModal').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
+
+    async function confirmBooking() {
+        const plate = document.getElementById('vehiclePlate').value.trim().toUpperCase();
+        let phone   = document.getElementById('mpesaPhone').value.trim();
+
+        if (!phone) {
+            document.getElementById('modalAlert').className = 'modal-alert error';
+            document.getElementById('modalAlertText').textContent = 'Please enter your M-Pesa phone number';
+            return;
+        }
+
+        // Normalise phone → 254XXXXXXXXX
+        phone = phone.replace(/\s+/g, '');
+        if (phone.startsWith('0')) phone = '254' + phone.substring(1);
+        if (phone.startsWith('+')) phone = phone.substring(1);
+        if (!/^254[0-9]{9}$/.test(phone)) {
+            document.getElementById('modalAlert').className = 'modal-alert error';
+            document.getElementById('modalAlertText').textContent = 'Enter a valid Safaricom number e.g. 0712345678';
+            return;
+        }
+
+        const btn = document.getElementById('confirmBtn');
+        btn.innerHTML = '<span style="width:14px;height:14px;border:2px solid rgba(0,0,0,0.3);border-top-color:#000;border-radius:50%;display:inline-block;animation:spin 0.6s linear infinite"></span> Sending prompt...';
+        btn.style.opacity = '0.7'; btn.style.pointerEvents = 'none';
+        document.getElementById('modalAlert').className = 'modal-alert';
+
+        try {
+            // Step 1 — create the booking first
+            const bookingData = await apiCreateBooking(selectedSlot, plate);
+            if (!bookingData.success && !bookingData.id) {
+                document.getElementById('modalAlert').className = 'modal-alert error';
+                document.getElementById('modalAlertText').textContent = bookingData.message || 'Booking failed. Slot may already be taken.';
+                return;
+            }
+
+            const bookingId = bookingData.id || bookingData.bookingId;
+
+            // Step 2 — trigger M-Pesa STK push
+            const mpesaRes = await fetch(`http://localhost:8080/api/mpesa/pay`, {
+                method: 'POST',
+                headers: authHeaders(),
+                body: JSON.stringify({ phone, bookingId, amount: 50 })
+            });
+            const mpesaData = await mpesaRes.json();
+
+            if (!mpesaRes.ok || !mpesaData.checkoutRequestId) {
+                // Booking created but M-Pesa failed — still confirm booking
+                closeModal();
+                showToast(`✅ ${selectedSlot} booked! Pay at the gate.`, 'success');
+                searchNearby();
+                return;
+            }
+
+            // Step 3 — show waiting status and poll for payment
+            const checkoutId = mpesaData.checkoutRequestId;
+            const statusEl   = document.getElementById('mpesaStatus');
+            const statusText = document.getElementById('mpesaStatusText');
+            statusEl.style.display = 'flex';
+            btn.innerHTML = '<i class="bi bi-phone-fill"></i> Waiting for payment...';
+
+            let attempts = 0;
+            const poll = setInterval(async () => {
+                attempts++;
+                try {
+                    const statusRes  = await fetch(`http://localhost:8080/api/mpesa/status/${checkoutId}`, { headers: authHeaders() });
+                    const statusData = await statusRes.json();
+
+                    if (statusData.status === 'COMPLETED' || statusData.resultCode === '0') {
+                        clearInterval(poll);
+                        closeModal();
+                        showToast(`✅ Payment received! ${selectedSlot} booked.`, 'success');
+                        searchNearby();
+                    } else if (statusData.status === 'FAILED' || statusData.resultCode === '1032') {
+                        clearInterval(poll);
+                        statusEl.style.display = 'none';
+                        document.getElementById('modalAlert').className = 'modal-alert error';
+                        document.getElementById('modalAlertText').textContent = 'Payment cancelled or failed. Your slot is still reserved for 15 min.';
+                        btn.innerHTML = '<i class="bi bi-phone-fill"></i> Retry Payment';
+                        btn.style.opacity = ''; btn.style.pointerEvents = '';
+                    } else if (attempts >= 12) {
+                        // 12 × 5s = 60s timeout
+                        clearInterval(poll);
+                        closeModal();
+                        showToast(`⏳ Payment pending. ${selectedSlot} reserved for 15 min.`, 'success');
+                        searchNearby();
+                    } else {
+                        statusText.textContent = `Waiting for payment... (${attempts * 5}s)`;
+                    }
+                } catch(_) { /* keep polling */ }
+            }, 5000);
+
+        } catch (err) {
+            document.getElementById('modalAlert').className = 'modal-alert error';
+            document.getElementById('modalAlertText').textContent = 'Connection error. Is Spring Boot running?';
+        } finally {
+            if (btn.style.pointerEvents === 'none') {
+                btn.style.opacity = ''; btn.style.pointerEvents = '';
+            }
+        }
+    }
+
+    function showToast(message, type = 'success') {
+        const c = document.getElementById('toastContainer');
+        const t = document.createElement('div');
+        t.className = `toast ${type}`;
+        t.innerHTML = `<i class="bi bi-${type==='success'?'check-circle-fill':'exclamation-circle-fill'}" style="color:${type==='success'?'var(--green)':'var(--red)'}"></i> ${message}`;
+        c.appendChild(t);
+        setTimeout(() => t.remove(), 4000);
+    }
+</script>
+
+<!-- WebSocket Live Updates -->
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+<script>
+    function connectWebSocket() {
+        try {
+            const token = getToken();
+            if (!token) return;
+            const socket      = new SockJS('http://localhost:8080/ws');
+            const stompClient = Stomp.over(socket);
+            stompClient.debug = null;
+
+            stompClient.connect(
+                { 'Authorization': 'Bearer ' + token },
+                function(frame) {
+                    console.log('📡 WebSocket connected');
+                    stompClient.subscribe('/topic/slots', function(message) {
+                        const update = JSON.parse(message.body);
+                        const emoji  = update.status === 'FREE' ? '🟢' : update.status === 'RESERVED' ? '🟡' : '🔴';
+                        showToast(`${emoji} ${update.slotId} → ${update.status}`, 'success');
+                        searchNearby();
+                    });
+                },
+                function(error) {
+                    setTimeout(connectWebSocket, 5000);
+                }
+            );
+        } catch(e) {
+            setTimeout(connectWebSocket, 5000);
+        }
+    }
+    connectWebSocket();
+</script>
+</body>
+</html>

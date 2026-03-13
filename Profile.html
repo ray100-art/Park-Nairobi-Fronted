@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile — ParkNairobi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --gold:#F5C842; --black:#0A0A0F; --surface:#111118; --surface2:#1A1A24;
+            --border:#2a2a38; --text:#F0EDE8; --muted:#7A7A90;
+            --green:#22c55e; --red:#ef4444; --orange:#f97316;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:var(--black); color:var(--text); font-family:'DM Sans',sans-serif; min-height:100vh; display:flex; flex-direction:column; }
+
+        /* ── Navbar ── */
+        .navbar { height:60px; background:var(--surface); border-bottom:1px solid var(--border); display:flex; align-items:center; padding:0 20px; gap:12px; flex-shrink:0; }
+        .nav-brand { display:flex; align-items:center; gap:10px; text-decoration:none; }
+        .nav-p { width:36px; height:36px; background:var(--gold); border-radius:9px; display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-weight:800; font-size:1.1rem; color:var(--black); }
+        .nav-title { font-family:'Syne',sans-serif; font-weight:700; font-size:1rem; color:var(--text); }
+        .nav-title span { color:var(--gold); }
+        .nav-spacer { flex:1; }
+        .nav-btn { height:36px; padding:0 14px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--text); font-family:'DM Sans',sans-serif; font-size:0.83rem; cursor:pointer; display:flex; align-items:center; gap:6px; transition:all 0.2s; text-decoration:none; }
+        .nav-btn:hover { border-color:var(--gold); color:var(--gold); }
+        .nav-btn.gold { background:var(--gold); color:var(--black); border-color:var(--gold); font-weight:600; }
+        .nav-user { display:flex; align-items:center; gap:8px; padding:4px 10px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; }
+        .nav-avatar { width:28px; height:28px; background:var(--gold); border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-weight:700; font-size:0.75rem; color:var(--black); }
+        .nav-username { font-size:0.83rem; color:var(--text); }
+
+        /* ── Page ── */
+        .page { flex:1; display:flex; justify-content:center; padding:40px 20px; }
+        .container { width:100%; max-width:640px; display:flex; flex-direction:column; gap:20px; }
+
+        /* ── Card ── */
+        .card { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+        .card-header { padding:18px 22px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; }
+        .card-header i { color:var(--gold); font-size:1.1rem; }
+        .card-title { font-family:'Syne',sans-serif; font-weight:700; font-size:1rem; }
+        .card-body { padding:22px; }
+
+        /* ── Avatar block ── */
+        .avatar-block { display:flex; align-items:center; gap:18px; margin-bottom:24px; }
+        .big-avatar { width:64px; height:64px; background:var(--gold); border-radius:16px; display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-weight:800; font-size:1.6rem; color:var(--black); flex-shrink:0; }
+        .avatar-info { display:flex; flex-direction:column; gap:4px; }
+        .avatar-name { font-family:'Syne',sans-serif; font-weight:700; font-size:1.1rem; }
+        .avatar-role { font-size:0.78rem; color:var(--muted); background:var(--surface2); border:1px solid var(--border); border-radius:20px; padding:2px 10px; display:inline-block; }
+
+        /* ── Form ── */
+        .form-group { margin-bottom:16px; }
+        .form-group label { display:block; font-size:0.78rem; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:.05em; }
+        .form-group input { width:100%; padding:10px 14px; background:var(--surface2); border:1px solid var(--border); border-radius:9px; color:var(--text); font-family:'DM Sans',sans-serif; font-size:0.9rem; outline:none; transition:border-color 0.2s; }
+        .form-group input:focus { border-color:var(--gold); }
+        .form-group input:disabled { opacity:0.5; cursor:not-allowed; }
+        .form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+
+        /* ── Buttons ── */
+        .btn { height:40px; padding:0 20px; border-radius:9px; border:none; font-family:'Syne',sans-serif; font-weight:700; font-size:0.85rem; cursor:pointer; display:inline-flex; align-items:center; gap:8px; transition:all 0.2s; }
+        .btn-gold { background:var(--gold); color:var(--black); }
+        .btn-gold:hover { background:#e8b830; }
+        .btn-ghost { background:transparent; border:1px solid var(--border); color:var(--text); }
+        .btn-ghost:hover { border-color:var(--gold); color:var(--gold); }
+        .btn-danger { background:transparent; border:1px solid rgba(239,68,68,.3); color:var(--red); }
+        .btn-danger:hover { background:rgba(239,68,68,.1); }
+        .btn-row { display:flex; gap:10px; margin-top:6px; }
+
+        /* ── Alert ── */
+        .alert { padding:11px 14px; border-radius:9px; font-size:0.85rem; display:none; margin-bottom:14px; }
+        .alert.success { background:rgba(34,197,94,.1); border:1px solid rgba(34,197,94,.3); color:var(--green); }
+        .alert.error   { background:rgba(239,68,68,.1);  border:1px solid rgba(239,68,68,.3);  color:var(--red); }
+        .alert.show { display:flex; align-items:center; gap:8px; }
+
+        /* ── Divider ── */
+        .divider { height:1px; background:var(--border); margin:4px 0 20px; }
+
+        /* ── Stats ── */
+        .stats-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+        .stat-card { background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:14px; text-align:center; }
+        .stat-value { font-family:'Syne',sans-serif; font-weight:800; font-size:1.4rem; color:var(--gold); }
+        .stat-label { font-size:0.75rem; color:var(--muted); margin-top:4px; }
+
+        /* ── Toast ── */
+        .toast-container { position:fixed; bottom:24px; right:24px; display:flex; flex-direction:column; gap:8px; z-index:9999; }
+        .toast { padding:12px 18px; border-radius:10px; font-size:0.85rem; display:flex; align-items:center; gap:8px; animation:slideIn .25s ease; }
+        .toast.success { background:#166534; border:1px solid #22c55e; color:#bbf7d0; }
+        .toast.error   { background:#7f1d1d; border:1px solid #ef4444; color:#fecaca; }
+        @keyframes slideIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+        @media(max-width:500px) { .form-row { grid-template-columns:1fr; } .stats-grid { grid-template-columns:1fr 1fr; } }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <a href="index.html" class="nav-brand">
+        <div class="nav-p">P</div>
+        <div class="nav-title">Park<span>Nairobi</span></div>
+    </a>
+    <div class="nav-spacer"></div>
+    <a href="dashboard.html" class="nav-btn gold">
+        <i class="bi bi-map"></i> Find Parking
+    </a>
+    <a href="bookings.html" class="nav-btn">
+        <i class="bi bi-calendar-check"></i> Bookings
+    </a>
+    <div class="nav-user">
+        <div class="nav-avatar" id="navAvatar">?</div>
+        <span class="nav-username" id="navUsername">Driver</span>
+    </div>
+    <button class="nav-btn" onclick="logout()" style="border-color:rgba(239,68,68,0.3);color:#ef4444">
+        <i class="bi bi-box-arrow-right"></i>
+    </button>
+</nav>
+
+<div class="page">
+    <div class="container">
+
+        <!-- Stats -->
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-bar-chart-fill"></i>
+                <span class="card-title">My Activity</span>
+            </div>
+            <div class="card-body">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="statTotal">—</div>
+                        <div class="stat-label">Total Bookings</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statActive" style="color:var(--green)">—</div>
+                        <div class="stat-label">Active</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statCancelled" style="color:var(--red)">—</div>
+                        <div class="stat-label">Cancelled</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Profile -->
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-person-fill"></i>
+                <span class="card-title">Profile Details</span>
+            </div>
+            <div class="card-body">
+                <div class="avatar-block">
+                    <div class="big-avatar" id="bigAvatar">?</div>
+                    <div class="avatar-info">
+                        <div class="avatar-name" id="avatarName">Loading...</div>
+                        <span class="avatar-role" id="avatarRole">DRIVER</span>
+                    </div>
+                </div>
+
+                <div class="alert" id="profileAlert"></div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" id="inputName" placeholder="Your full name">
+                    </div>
+                    <div class="form-group">
+                        <label>Phone</label>
+                        <input type="text" id="inputPhone" placeholder="e.g. 0712345678">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="inputEmail" disabled>
+                </div>
+
+                <div class="btn-row">
+                    <button class="btn btn-gold" onclick="saveProfile()">
+                        <i class="bi bi-check-lg"></i> Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Change Password -->
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-shield-lock-fill"></i>
+                <span class="card-title">Change Password</span>
+            </div>
+            <div class="card-body">
+                <div class="alert" id="pwAlert"></div>
+
+                <div class="form-group">
+                    <label>Current Password</label>
+                    <input type="password" id="inputCurrentPw" placeholder="Enter current password">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>New Password</label>
+                        <input type="password" id="inputNewPw" placeholder="Min 6 characters">
+                    </div>
+                    <div class="form-group">
+                        <label>Confirm New Password</label>
+                        <input type="password" id="inputConfirmPw" placeholder="Repeat new password">
+                    </div>
+                </div>
+
+                <div class="btn-row">
+                    <button class="btn btn-gold" onclick="changePassword()">
+                        <i class="bi bi-lock-fill"></i> Update Password
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Danger Zone -->
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-box-arrow-right" style="color:var(--red)"></i>
+                <span class="card-title">Session</span>
+            </div>
+            <div class="card-body">
+                <p style="font-size:.85rem;color:var(--muted);margin-bottom:16px">You are currently signed in. Logging out will clear your session from this device.</p>
+                <button class="btn btn-danger" onclick="logout()">
+                    <i class="bi bi-box-arrow-right"></i> Log Out
+                </button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="js/api.js"></script>
+<script>
+    const API = 'http://localhost:8080';
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if (!getToken()) { window.location.href = 'index.html'; return; }
+
+        // Pre-fill navbar immediately from localStorage so name is never blank
+        const cached = getUser();
+        if (cached && cached.fullName) {
+            document.getElementById('navAvatar').textContent   = cached.fullName.charAt(0).toUpperCase();
+            document.getElementById('navUsername').textContent = cached.fullName;
+            document.getElementById('bigAvatar').textContent   = cached.fullName.charAt(0).toUpperCase();
+            document.getElementById('avatarName').textContent  = cached.fullName;
+            document.getElementById('inputName').value         = cached.fullName;
+            document.getElementById('inputEmail').value        = cached.email || '';
+        }
+
+        loadProfile();
+        loadStats();
+    });
+
+    // ── Load profile ──────────────────────────────
+    async function loadProfile() {
+        try {
+            const r    = await fetch(`${API}/api/profile`, { headers: authHeaders() });
+            const text = await r.text();
+            let u;
+            try { u = JSON.parse(text); } catch(_) { throw new Error(`Server error (HTTP ${r.status})`); }
+            if (!r.ok) throw new Error(`HTTP ${r.status} — ${u.message || text}`);
+
+            document.getElementById('inputName').value         = u.fullName || '';
+            document.getElementById('inputPhone').value        = u.phone    || '';
+            document.getElementById('inputEmail').value        = u.email    || '';
+            document.getElementById('bigAvatar').textContent   = (u.fullName || 'D').charAt(0).toUpperCase();
+            document.getElementById('avatarName').textContent  = u.fullName || 'Driver';
+            document.getElementById('avatarRole').textContent  = u.role     || 'DRIVER';
+            document.getElementById('navAvatar').textContent   = (u.fullName || 'D').charAt(0).toUpperCase();
+            document.getElementById('navUsername').textContent = u.fullName  || 'Driver';
+
+            // Keep localStorage in sync with server
+            const cached = getUser() || {};
+            cached.fullName = u.fullName;
+            cached.email    = u.email;
+            cached.phone    = u.phone;
+            cached.role     = u.role;
+            localStorage.setItem('user', JSON.stringify(cached));
+        } catch(e) {
+            console.error('loadProfile error:', e);
+            showToast(`Could not load profile: ${e.message}`, 'error');
+        }
+    }
+
+    // ── Load stats ────────────────────────────────
+    async function loadStats() {
+        try {
+            const r = await fetch(`${API}/api/bookings/my`, { headers: authHeaders() });
+            if (!r.ok) return;
+            const bookings = await r.json();
+            const list = Array.isArray(bookings) ? bookings : (bookings.content || []);
+            document.getElementById('statTotal').textContent     = list.length;
+            document.getElementById('statActive').textContent    = list.filter(b => b.status === 'ACTIVE' || b.status === 'CONFIRMED').length;
+            document.getElementById('statCancelled').textContent = list.filter(b => b.status === 'CANCELLED').length;
+        } catch(e) { /* stats are non-critical */ }
+    }
+
+    // ── Save profile ──────────────────────────────
+    async function saveProfile() {
+        const fullName = document.getElementById('inputName').value.trim();
+        const phone    = document.getElementById('inputPhone').value.trim();
+        const alert    = document.getElementById('profileAlert');
+
+        if (!fullName) { showAlert(alert, 'Full name is required', 'error'); return; }
+
+        try {
+            const r = await fetch(`${API}/api/profile`, {
+                method: 'PUT',
+                headers: authHeaders(),
+                body: JSON.stringify({ fullName, phone })
+            });
+            const text = await r.text();
+            let data;
+            try { data = JSON.parse(text); } catch(_) { data = {}; }
+
+            if (!r.ok) {
+                showAlert(alert, `HTTP ${r.status} — ${data.message || 'Failed to save'}`, 'error');
+                return;
+            }
+            // Update localStorage
+            const user = getUser();
+            if (user) { user.fullName = fullName; user.phone = phone; localStorage.setItem('user', JSON.stringify(user)); }
+            document.getElementById('bigAvatar').textContent   = fullName.charAt(0).toUpperCase();
+            document.getElementById('avatarName').textContent  = fullName;
+            document.getElementById('navAvatar').textContent   = fullName.charAt(0).toUpperCase();
+            document.getElementById('navUsername').textContent = fullName;
+            showAlert(alert, 'Profile updated successfully', 'success');
+            showToast('Profile saved', 'success');
+        } catch(e) {
+            showAlert(alert, 'Cannot reach server — is Spring Boot running?', 'error');
+        }
+    }
+
+    // ── Change password ───────────────────────────
+    async function changePassword() {
+        const currentPassword = document.getElementById('inputCurrentPw').value;
+        const newPassword     = document.getElementById('inputNewPw').value;
+        const confirmPassword = document.getElementById('inputConfirmPw').value;
+        const alert           = document.getElementById('pwAlert');
+
+        if (!currentPassword) { showAlert(alert, 'Enter your current password', 'error'); return; }
+        if (newPassword.length < 6) { showAlert(alert, 'New password must be at least 6 characters', 'error'); return; }
+        if (newPassword !== confirmPassword) { showAlert(alert, 'New passwords do not match', 'error'); return; }
+
+        try {
+            const r = await fetch(`${API}/api/profile/password`, {
+                method: 'PUT',
+                headers: authHeaders(),
+                body: JSON.stringify({ currentPassword, newPassword })
+            });
+            const text = await r.text();
+            let data;
+            try { data = JSON.parse(text); } catch(_) { data = {}; }
+
+            if (!r.ok) {
+                showAlert(alert, `HTTP ${r.status} — ${data.message || 'Failed to update password'}`, 'error');
+                return;
+            }
+            document.getElementById('inputCurrentPw').value = '';
+            document.getElementById('inputNewPw').value     = '';
+            document.getElementById('inputConfirmPw').value = '';
+            showAlert(alert, 'Password updated successfully', 'success');
+            showToast('Password changed', 'success');
+        } catch(e) {
+            showAlert(alert, 'Cannot reach server — is Spring Boot running?', 'error');
+        }
+    }
+
+    // ── Helpers ───────────────────────────────────
+    function showAlert(el, msg, type) {
+        el.className = `alert ${type} show`;
+        el.innerHTML = `<i class="bi bi-${type==='success'?'check-circle-fill':'exclamation-circle-fill'}"></i> ${msg}`;
+        setTimeout(() => { el.className = 'alert'; }, 5000);
+    }
+
+    function showToast(msg, type='success') {
+        const t = document.createElement('div');
+        t.className = `toast ${type}`;
+        t.innerHTML = `<i class="bi bi-${type==='success'?'check-circle-fill':'exclamation-circle-fill'}"></i> ${msg}`;
+        document.getElementById('toastContainer').appendChild(t);
+        setTimeout(() => t.remove(), 3500);
+    }
+</script>
+</body>
+</html>

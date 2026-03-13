@@ -1,0 +1,82 @@
+/* ── Base ─────────────────────────────────────── */
+body {
+    font-family: 'Segoe UI', sans-serif;
+}
+
+/* ── Dark card ───────────────────────────────── */
+.bg-secondary-dark {
+    background-color: #1e1e2e !important;
+}
+
+/* ── Slot card ───────────────────────────────── */
+.slot-card {
+    background-color: #1e1e2e;
+    border: 1px solid #333;
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.slot-card:hover {
+    border-color: #ffc107;
+    transform: translateY(-2px);
+}
+
+.slot-card.occupied {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ── Status badges ───────────────────────────── */
+.badge-free     { background-color: #198754; }
+.badge-occupied { background-color: #dc3545; }
+.badge-reserved { background-color: #fd7e14; }
+
+/* ── Map ─────────────────────────────────────── */
+#map {
+    z-index: 1;
+}
+
+/* ── Leaflet popup ───────────────────────────── */
+.leaflet-popup-content-wrapper {
+    background: #1e1e2e;
+    color: white;
+    border: 1px solid #ffc107;
+    border-radius: 10px;
+}
+
+.leaflet-popup-tip {
+    background: #ffc107;
+}
+
+/* ── Booking card ────────────────────────────── */
+.booking-card {
+    background-color: #1e1e2e;
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 16px;
+    transition: all 0.2s ease;
+}
+
+.booking-card:hover {
+    border-color: #ffc107;
+}
+
+/* ── Scrollbar ───────────────────────────────── */
+::-webkit-scrollbar       { width: 6px; }
+::-webkit-scrollbar-track { background: #111; }
+::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #ffc107; }
+/* ── Detail icon ─────────────────────────────── */
+.detail-icon {
+    width: 28px;
+    height: 28px;
+    background: #2a2a3e;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
