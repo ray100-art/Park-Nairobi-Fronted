@@ -18,6 +18,13 @@ function authHeaders() {
     };
 }
 
+// Fetch wrapper: auto-logout on 401 (expired / invalid token)
+async function apiFetch(url, options) {
+    const res = await fetch(url, options);
+    if (res.status === 401) { logout(); return res; }
+    return res;
+}
+
 // ── Auth ───────────────────────────────────────
 async function apiRegister(fullName, email, phone, password) {
     const res = await fetch(`${API_BASE}/api/auth/register`, {
@@ -54,16 +61,17 @@ async function apiGetSummary() {
 
 // ── Bookings ───────────────────────────────────
 async function apiCreateBooking(slotId, vehiclePlate) {
-    const res = await fetch(`${API_BASE}/api/bookings`, {
+    const res = await apiFetch(`${API_BASE}/api/bookings`, {
         method: 'POST',
         headers: authHeaders(),
         body: JSON.stringify({ slotId, vehiclePlate })
     });
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.message || 'HTTP ' + res.status); }
     return res.json();
 }
 
 async function apiGetMyBookings() {
-    const res = await fetch(`${API_BASE}/api/bookings/my`, {
+    const res = await apiFetch(`${API_BASE}/api/bookings/my`, {
         headers: authHeaders()
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -71,28 +79,29 @@ async function apiGetMyBookings() {
 }
 
 async function apiCancelBooking(bookingId) {
-    const res = await fetch(`${API_BASE}/api/bookings/${bookingId}`, {
+    const res = await apiFetch(`${API_BASE}/api/bookings/${bookingId}`, {
         method: 'DELETE',
         headers: authHeaders()
     });
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.message || 'HTTP ' + res.status); }
     return res.json();
 }
 
 // ── Admin ──────────────────────────────────────
 async function apiGetAllUsers() {
-    const res = await fetch(`${API_BASE}/api/admin/users`, { headers: authHeaders() });
+    const res = await apiFetch(`${API_BASE}/api/admin/users`, { headers: authHeaders() });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     return res.json();
 }
 
 async function apiGetAllBookings() {
-    const res = await fetch(`${API_BASE}/api/bookings/all`, { headers: authHeaders() });
+    const res = await apiFetch(`${API_BASE}/api/bookings/all`, { headers: authHeaders() });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     return res.json();
 }
 
 async function apiFreeSlot(slotId) {
-    const res = await fetch(`${API_BASE}/api/slots/${slotId}/free`, {
+    const res = await apiFetch(`${API_BASE}/api/slots/${slotId}/free`, {
         method: 'PUT',
         headers: authHeaders()
     });
@@ -101,26 +110,29 @@ async function apiFreeSlot(slotId) {
 
 // ── Sensor ─────────────────────────────────────
 async function apiSensorEntry(slotId) {
-    const res = await fetch(`${API_BASE}/api/sensor/entry`, {
+    const res = await apiFetch(`${API_BASE}/api/sensor/entry`, {
         method: 'POST',
         headers: authHeaders(),
         body: JSON.stringify({ slotId })
     });
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.message || 'HTTP ' + res.status); }
     return res.json();
 }
 
 async function apiSensorExit(slotId) {
-    const res = await fetch(`${API_BASE}/api/sensor/exit`, {
+    const res = await apiFetch(`${API_BASE}/api/sensor/exit`, {
         method: 'POST',
         headers: authHeaders(),
         body: JSON.stringify({ slotId })
     });
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.message || 'HTTP ' + res.status); }
     return res.json();
 }
 
 async function apiSensorStatus(slotId) {
-    const res = await fetch(`${API_BASE}/api/sensor/status/${slotId}`, {
+    const res = await apiFetch(`${API_BASE}/api/sensor/status/${slotId}`, {
         headers: authHeaders()
     });
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.message || 'HTTP ' + res.status); }
     return res.json();
 }

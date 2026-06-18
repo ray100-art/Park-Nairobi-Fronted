@@ -119,7 +119,7 @@
         <button class="sb-item" onclick="showPage('users')"><i class="bi bi-people-fill"></i> Users</button>
         <div class="sb-section">System</div>
         <button class="sb-item" onclick="showPage('sensor')"><i class="bi bi-cpu-fill"></i> Sensor Simulator</button>
-        <button class="sb-item" onclick="window.open('http://localhost:8080/api/slots','_blank')"><i class="bi bi-code-slash"></i> API Explorer</button>
+        <button class="sb-item" onclick="window.open(API_BASE+'/api/slots','_blank')"><i class="bi bi-code-slash"></i> API Explorer</button>
         <div style="padding:10px 12px;margin-top:4px">
             <div style="font-size:.75rem;color:var(--muted);display:flex;align-items:center">
                 <span class="ws-dot" id="wsDot"></span>
@@ -325,14 +325,14 @@
 <div class="toast-container" id="toastContainer"></div>
 
 <script>
-const API = 'http://localhost:8080';
+const API_BASE = 'http://localhost:8080';
 let allSlots = [], allBookings = [], allUsers = [];
 let currentPage = 'overview';
 
 const token = localStorage.getItem('token');
 const user  = JSON.parse(localStorage.getItem('user') || '{}');
 if (!token) { window.location.href = 'index.html'; }
-if (user.role && user.role !== 'ADMIN') { alert('Admin only.'); window.location.href = 'dashboard.html'; }
+if (!user.role || user.role !== 'ADMIN') { alert('Admin only.'); window.location.href = 'dashboard.html'; }
 if (user.fullName) {
     document.getElementById('adminName').textContent   = user.fullName;
     document.getElementById('adminAvatar').textContent = user.fullName.charAt(0).toUpperCase();
@@ -371,7 +371,7 @@ function loadPage(name) {
 
 async function loadOverview() {
     try {
-        const r = await fetch(`${API}/api/slots`,{headers:authHeaders()});
+        const r = await fetch(`${API_BASE}/api/slots`,{headers:authHeaders()});
         allSlots = await r.json();
         const free=allSlots.filter(s=>s.status==='FREE').length;
         const res=allSlots.filter(s=>s.status==='RESERVED').length;
@@ -383,7 +383,7 @@ async function loadOverview() {
     } catch(e) { document.getElementById('totalSlots').textContent='ERR'; }
 
     try {
-        const r = await fetch(`${API}/api/bookings/all`,{headers:authHeaders()});
+        const r = await fetch(`${API_BASE}/api/bookings/all`,{headers:authHeaders()});
         if(r.ok) {
             allBookings = await r.json();
             const active = allBookings.filter(b=>b.status==='PENDING'||b.status==='ACTIVE').length;
@@ -397,7 +397,7 @@ async function loadOverview() {
     } catch(e) {}
 
     try {
-        const r = await fetch(`${API}/api/admin/users`,{headers:authHeaders()});
+        const r = await fetch(`${API_BASE}/api/admin/users`,{headers:authHeaders()});
         if(r.ok) { allUsers=await r.json(); document.getElementById('totalUsers').textContent=allUsers.length; }
         else { document.getElementById('totalUsers').textContent='–'; }
     } catch(e) { document.getElementById('totalUsers').textContent='–'; }
@@ -430,7 +430,7 @@ async function loadSlots() {
     const tb=document.getElementById('slotsBody');
     tb.innerHTML='<tr class="loading-row"><td colspan="7"><span class="spinner"></span>Loading...</td></tr>';
     try {
-        const r=await fetch(`${API}/api/slots`,{headers:authHeaders()});
+        const r=await fetch(`${API_BASE}/api/slots`,{headers:authHeaders()});
         allSlots=await r.json();
         document.getElementById('slotsCount').textContent=`${allSlots.length} slots total`;
         renderSlots(allSlots);
@@ -458,7 +458,7 @@ function filterSlots(status,btn) {
 async function freeSlot(slotId) {
     if(!confirm(`Free up slot ${slotId}?`)) return;
     try {
-        const r=await fetch(`${API}/api/slots/${slotId}/free`,{method:'PUT',headers:authHeaders()});
+        const r=await fetch(`${API_BASE}/api/slots/${slotId}/free`,{method:'PUT',headers:authHeaders()});
         if(r.ok){loadPage(currentPage);showToast(`Slot ${slotId} freed`,'success');}
         else showToast('Could not free slot','info');
     } catch(e){showToast('Error: '+e.message,'info');}
@@ -468,7 +468,7 @@ async function loadBookings() {
     const tb=document.getElementById('bookingsBody');
     tb.innerHTML='<tr class="loading-row"><td colspan="7"><span class="spinner"></span>Loading...</td></tr>';
     try {
-        const r=await fetch(`${API}/api/bookings/all`,{headers:authHeaders()});
+        const r=await fetch(`${API_BASE}/api/bookings/all`,{headers:authHeaders()});
         if(!r.ok) throw new Error();
         allBookings=await r.json();
         document.getElementById('bookingsCount').textContent=`${allBookings.length} bookings total`;
@@ -499,7 +499,7 @@ async function loadUsers() {
     const tb=document.getElementById('usersBody');
     tb.innerHTML='<tr class="loading-row"><td colspan="7"><span class="spinner"></span>Loading...</td></tr>';
     try {
-        const r=await fetch(`${API}/api/admin/users`,{headers:authHeaders()});
+        const r=await fetch(`${API_BASE}/api/admin/users`,{headers:authHeaders()});
         if(!r.ok) throw new Error();
         allUsers=await r.json();
         document.getElementById('usersCount').textContent=`${allUsers.length} users registered`;
@@ -530,7 +530,7 @@ function showToast(message,type='success') {
 // Sensor Simulator
 async function loadSensorSlots() {
     try {
-        const r = await fetch(`${API}/api/slots`,{headers:authHeaders()});
+        const r = await fetch(`${API_BASE}/api/slots`,{headers:authHeaders()});
         allSlots = await r.json();
         const sel = document.getElementById('sensorSlotSelect');
         if(sel) sel.innerHTML = allSlots.map(s=>
@@ -557,7 +557,7 @@ async function loadSensorSlots() {
 }
 
 async function quickToggle(slotId, action) {
-    await fetch(`${API}/api/sensor/${action}`,{
+    await fetch(`${API_BASE}/api/sensor/${action}`,{
         method:'POST', headers:authHeaders(),
         body: JSON.stringify({slotId, sensorId:'ADMIN_SIM'})
     });
@@ -570,61 +570,71 @@ async function triggerSensor(action) {
     const slotId   = document.getElementById('sensorSlotSelect').value;
     const sensorId = document.getElementById('sensorIdInput').value||'SENSOR_001';
     const result   = document.getElementById('sensorResult');
-    if(!slotId){showToast('Select a slot','info');return;}
-    result.style.cssText='display:block;padding:12px 14px;border-radius:9px;font-size:.85rem;color:var(--muted)';
-    result.innerHTML='<i class="bi bi-hourglass-split"></i> Sending...';
+    if(!slotId){showToast('Select a slot first','info');return;}
+    result.style.cssText='display:block;color:var(--muted);padding:12px 14px;border-radius:9px;background:var(--surface2);font-size:.85rem';
+    result.innerHTML='<span>Sending request...</span>';
     try {
-        const r = await fetch(`${API}/api/sensor/${action}`,{
+        const r = await fetch(`${API_BASE}/api/sensor/${action}`,{
             method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({slotId,sensorId})
+            headers:authHeaders(),
+            body: JSON.stringify({slotId: slotId, sensorId: sensorId})
         });
         const text = await r.text();
+        console.log('Sensor trigger HTTP', r.status, text);
         let data;
-        try { data = JSON.parse(text); } catch(_){ data = {success:false, message:`HTTP ${r.status}: ${text||r.statusText}`}; }
-        if(r.ok && data.success){
+        try { data = JSON.parse(text); } catch(pe) { data = {success:false, message:'Server returned: ' + text.substring(0,100)}; }
+        if(r.status===401||r.status===403){
+            result.style.cssText='display:block;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--red);padding:12px 14px;border-radius:9px;font-size:.85rem';
+            result.innerHTML='<i class="bi bi-lock-fill"></i> Unauthorized (HTTP '+r.status+'). Make sure your user is ADMIN in the database.';
+            return;
+        }
+        if(data.success){
             result.style.cssText='display:block;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:var(--green);padding:12px 14px;border-radius:9px;font-size:.85rem';
-            result.innerHTML=`<i class="bi bi-check-circle-fill"></i> ${data.message}`;
+            result.innerHTML='<i class="bi bi-check-circle-fill"></i> ' + data.message;
             loadSensorSlots();
         } else {
             result.style.cssText='display:block;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--red);padding:12px 14px;border-radius:9px;font-size:.85rem';
-            result.innerHTML=`<i class="bi bi-exclamation-circle-fill"></i> HTTP ${r.status} — ${data.message||'Unknown error'}`;
+            result.innerHTML='<i class="bi bi-exclamation-circle-fill"></i> ' + (data.message||'Failed — HTTP '+r.status);
         }
     } catch(e){
-        result.style.cssText='display:block;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--red);padding:12px 14px;border-radius:9px;font-size:.85rem';
-        result.innerHTML=`<i class="bi bi-wifi-off"></i> Cannot reach server at ${API} — is Spring Boot running?`;
         console.error('triggerSensor error:', e);
+        result.style.cssText='display:block;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--red);padding:12px 14px;border-radius:9px;font-size:.85rem';
+        result.innerHTML='<i class="bi bi-wifi-off"></i> Cannot reach server — is Spring Boot running on port 8080?';
     }
 }
 
 async function checkSlotStatus() {
     const slotId = document.getElementById('statusSlotInput').value.trim().toUpperCase();
     const result = document.getElementById('statusResult');
-    if(!slotId){showToast('Enter a slot ID','info');return;}
+    if(!slotId){showToast('Enter a slot ID first','info');return;}
     result.style.display='block';
-    result.innerHTML='<span style="color:var(--muted);font-size:.85rem"><i class="bi bi-hourglass-split"></i> Checking...</span>';
+    result.innerHTML='<span style="color:var(--muted);font-size:.85rem">Checking...</span>';
     try {
-        const r = await fetch(`${API}/api/sensor/status/${slotId}`);
+        const r = await fetch(`${API_BASE}/api/sensor/status/${slotId}`, {headers: authHeaders()});
         const text = await r.text();
+        console.log('SlotStatus HTTP', r.status, text);
         let data;
-        try { data = JSON.parse(text); } catch(_){ data = {success:false, message:`HTTP ${r.status}: ${text||r.statusText}`}; }
-        if(r.status===404){
-            result.innerHTML=`<div style="color:var(--red);font-size:.85rem"><i class="bi bi-exclamation-circle-fill"></i> Slot <strong>${slotId}</strong> not found in database.<br><small style="color:var(--muted)">Use format LOT_A-01 (uppercase, underscore after LOT)</small></div>`;
+        try { data = JSON.parse(text); } catch(pe) { data = {success:false, message:'Bad response (HTTP '+r.status+')'}; }
+        if(r.status===401||r.status===403){
+            result.innerHTML='<div style="color:var(--red);font-size:.85rem"><i class="bi bi-lock-fill"></i> Unauthorized. Run: UPDATE users SET role=\'ADMIN\' WHERE email=\'your@email.com\'</div>';
             return;
         }
-        if(!r.ok || !data.success){
-            result.innerHTML=`<div style="color:var(--red);font-size:.85rem"><i class="bi bi-exclamation-circle-fill"></i> HTTP ${r.status} — ${data.message||'Error checking slot'}</div>`;
+        if(!data.success){
+            result.innerHTML='<div style="color:var(--red);font-size:.85rem"><i class="bi bi-exclamation-circle-fill"></i> ' + (data.message||'Slot not found') + '<br><small style="color:var(--muted)">Check the slot ID format — e.g. LOT_A-01, CHK_A-01, MBA_A-01</small></div>';
             return;
         }
         const color = data.status==='FREE'?'var(--green)':data.status==='RESERVED'?'var(--orange)':'var(--red)';
-        result.innerHTML=`<div style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:14px">
-            <div style="font-family:'Syne',sans-serif;font-weight:700">${data.slotId}</div>
-            <div style="font-size:.8rem;color:var(--muted);margin-top:4px">${data.area||''}</div>
-            <div style="margin-top:10px;color:${color};font-weight:600">${data.status}</div>
-        </div>`;
+        const icon  = data.status==='FREE'?'check-circle-fill':data.status==='RESERVED'?'clock-fill':'car-front-fill';
+        result.innerHTML='<div style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:16px">' +
+            '<div style="display:flex;align-items:center;justify-content:space-between">' +
+            '<div style="font-family:\'Syne\',sans-serif;font-weight:700;font-size:1.1rem">' + data.slotId + '</div>' +
+            '<span style="background:' + color + '22;color:' + color + ';padding:4px 12px;border-radius:20px;font-size:.75rem;font-weight:700">' +
+            '<i class="bi bi-' + icon + '" style="margin-right:4px"></i>' + data.status + '</span></div>' +
+            '<div style="font-size:.8rem;color:var(--muted);margin-top:6px"><i class="bi bi-building" style="margin-right:4px"></i>' + (data.area||'Unknown area') + '</div>' +
+            '</div>';
     } catch(e){
-        result.innerHTML=`<div style="color:var(--red);font-size:.85rem"><i class="bi bi-wifi-off"></i> Cannot reach server at ${API} — is Spring Boot running?<br><small style="color:var(--muted)">${e.message}</small></div>`;
         console.error('checkSlotStatus error:', e);
+        result.innerHTML='<div style="color:var(--red);font-size:.85rem"><i class="bi bi-wifi-off"></i> Cannot reach server — is Spring Boot running on port 8080?</div>';
     }
 }
 
@@ -637,7 +647,7 @@ loadOverview();
 <script>
 function connectWebSocket() {
     try {
-        const socket = new SockJS('http://localhost:8080/ws');
+        const socket = new SockJS(API_BASE + '/ws');
         const stomp  = Stomp.over(socket);
         stomp.debug  = null;
         stomp.connect({'Authorization': 'Bearer ' + token}, function() {
