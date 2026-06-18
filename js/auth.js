@@ -46,9 +46,11 @@ async function login() {
         if (data.success) {
             localStorage.setItem('token', data.token);
             localStorage.setItem('user', JSON.stringify({
-                fullName: data.fullName,
-                role:     data.role,
-                userId:   data.userId
+                fullName: data.user.fullName,
+                role:     data.user.role,
+                userId:   data.user.id,
+                phone:    data.user.phone,
+                email:    data.user.email
             }));
             window.location.href = 'dashboard.html';
         } else {
@@ -76,8 +78,11 @@ async function register() {
         if (data.success) {
             localStorage.setItem('token', data.token);
             localStorage.setItem('user', JSON.stringify({
-                fullName: data.fullName,
-                role:     data.role
+                fullName: data.user.fullName,
+                role:     data.user.role,
+                userId:   data.user.id,
+                phone:    data.user.phone,
+                email:    data.user.email
             }));
             window.location.href = 'dashboard.html';
         } else {
