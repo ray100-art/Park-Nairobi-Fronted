@@ -1,0 +1,28 @@
+# Rewrites for SPA-style pages (optional; static HTML works without this)
+[[redirects]]
+  from = "/admin"
+  to = "/admin.html"
+  status = 200
+
+[[redirects]]
+  from = "/dashboard"
+  to = "/dashboard.html"
+  status = 200
+
+[[redirects]]
+  from = "/bookings"
+  to = "/bookings.html"
+  status = 200
+
+[[redirects]]
+  from = "/profile"
+  to = "/Profile.html"
+  status = 200
+
+[build]
+  command = "node build-config.js"
+  publish = "."
+
+[build.environment]
+  # Set this in Netlify UI → Site settings → Environment variables
+  # API_BASE = https://your-railway-backend.up.railway.app
