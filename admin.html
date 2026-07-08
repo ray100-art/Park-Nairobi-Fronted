@@ -210,7 +210,7 @@
                         <button class="tab-btn on" onclick="filterSlots('ALL',this)">All</button>
                         <button class="tab-btn" onclick="filterSlots('FREE',this)">Free</button>
                         <button class="tab-btn" onclick="filterSlots('RESERVED',this)">Reserved</button>
-                        <button class="tab-btn" onclick="filterSlots('TAKEN',this)">Taken</button>
+                        <button class="tab-btn" onclick="filterSlots('OCCUPIED',this)">Occupied</button>
                     </div>
                 </div>
                 <table>
@@ -324,22 +324,25 @@
 
 <div class="toast-container" id="toastContainer"></div>
 
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
 <script>
-const API_BASE = 'http://localhost:8080';
-let allSlots = [], allBookings = [], allUsers = [];
-let currentPage = 'overview';
-
-const token = localStorage.getItem('token');
-const user  = JSON.parse(localStorage.getItem('user') || '{}');
-if (!token) { window.location.href = 'index.html'; }
+const user = getUser() || {};
+if (!getToken()) { window.location.href = 'index.html'; }
 if (!user.role || user.role !== 'ADMIN') { alert('Admin only.'); window.location.href = 'dashboard.html'; }
 if (user.fullName) {
     document.getElementById('adminName').textContent   = user.fullName;
     document.getElementById('adminAvatar').textContent = user.fullName.charAt(0).toUpperCase();
 }
 
-function authHeaders() { return {'Content-Type':'application/json','Authorization':'Bearer '+token}; }
-function logout() { localStorage.clear(); window.location.href = 'index.html'; }
+let allSlots = [], allBookings = [], allUsers = [];
+let currentPage = 'overview';
+
+function esc(s) { return escapeHtml(s); }
+function safeStatus(s) {
+    var allowed = {FREE:1,RESERVED:1,OCCUPIED:1,PENDING:1,ACTIVE:1,CANCELLED:1};
+    return allowed[s] ? s.toLowerCase() : 'unknown';
+}
 
 const pageTitles = {
     overview:['Overview','Welcome back to ParkNairobi Admin'],
@@ -375,7 +378,7 @@ async function loadOverview() {
         allSlots = await r.json();
         const free=allSlots.filter(s=>s.status==='FREE').length;
         const res=allSlots.filter(s=>s.status==='RESERVED').length;
-        const tak=allSlots.filter(s=>s.status==='TAKEN').length;
+        const tak=allSlots.filter(s=>s.status==='OCCUPIED').length;
         document.getElementById('totalSlots').textContent    = allSlots.length;
         document.getElementById('freeSlots').textContent     = `${free} free · ${res} reserved · ${tak} taken`;
         document.getElementById('occupancyRate').textContent = allSlots.length ? Math.round(((res+tak)/allSlots.length)*100)+'%' : '0%';
@@ -406,11 +409,11 @@ async function loadOverview() {
 function renderOverviewSlots(slots) {
     const tb=document.getElementById('overviewSlotsBody');
     if(!slots.length){tb.innerHTML='<tr><td colspan="5"><div class="empty"><i class="bi bi-p-square"></i>No slots</div></td></tr>';return;}
-    tb.innerHTML=slots.map(s=>`<tr id="ov-row-${s.slotId}">
-        <td><code style="color:var(--gold);font-size:.82rem">${s.slotId}</code></td>
-        <td>${s.label||s.slotId}</td><td>${s.parkingAreaName||'–'}</td>
-        <td><span class="badge ${s.status.toLowerCase()}">${s.status}</span></td>
-        <td>${s.status!=='FREE'?`<button class="act-btn danger" onclick="freeSlot('${s.slotId}')">Free Up</button>`:'<span style="color:var(--green);font-size:.78rem">✓ Available</span>'}</td>
+    tb.innerHTML=slots.map(s=>`<tr id="ov-row-${esc(s.slotId)}">
+        <td><code style="color:var(--gold);font-size:.82rem">${esc(s.slotId)}</code></td>
+        <td>${esc(s.label||s.slotId)}</td><td>${esc(s.parkingAreaName||'–')}</td>
+        <td><span class="badge ${safeStatus(s.status)}">${esc(s.status)}</span></td>
+        <td>${s.status!=='FREE'?`<button class="act-btn danger" data-free-slot="${esc(s.slotId)}">Free Up</button>`:'<span style="color:var(--green);font-size:.78rem">✓ Available</span>'}</td>
     </tr>`).join('');
 }
 
@@ -419,9 +422,9 @@ function renderOverviewBookings(bookings) {
     if(!bookings.length){tb.innerHTML='<tr><td colspan="5"><div class="empty"><i class="bi bi-calendar"></i>No bookings yet</div></td></tr>';return;}
     tb.innerHTML=bookings.map(b=>`<tr>
         <td>#${b.id}</td>
-        <td><code style="color:var(--gold);font-size:.82rem">${b.slotId}</code></td>
-        <td>${b.vehiclePlate}</td>
-        <td><span class="badge ${b.status.toLowerCase()}">${b.status}</span></td>
+        <td><code style="color:var(--gold);font-size:.82rem">${esc(b.slotId)}</code></td>
+        <td>${esc(b.vehiclePlate)}</td>
+        <td><span class="badge ${safeStatus(b.status)}">${esc(b.status)}</span></td>
         <td style="color:var(--muted);font-size:.8rem">${formatDate(b.reservedAt)}</td>
     </tr>`).join('');
 }
@@ -440,12 +443,12 @@ async function loadSlots() {
 function renderSlots(slots) {
     const tb=document.getElementById('slotsBody');
     if(!slots.length){tb.innerHTML='<tr><td colspan="7"><div class="empty"><i class="bi bi-p-square"></i>No slots</div></td></tr>';return;}
-    tb.innerHTML=slots.map(s=>`<tr id="slot-row-${s.slotId}">
-        <td><code style="color:var(--gold);font-size:.82rem">${s.slotId}</code></td>
-        <td>${s.label||s.slotId}</td><td>${s.parkingAreaName||'–'}</td><td>${s.floor??0}</td>
-        <td><span class="badge ${s.status.toLowerCase()}">${s.status}</span></td>
-        <td style="font-size:.8rem;color:var(--muted)">${s.reservedByDriverId||'–'}</td>
-        <td>${s.status!=='FREE'?`<button class="act-btn danger" onclick="freeSlot('${s.slotId}')">Free Up</button>`:'<span style="color:var(--green);font-size:.78rem">✓ Free</span>'}</td>
+    tb.innerHTML=slots.map(s=>`<tr id="slot-row-${esc(s.slotId)}">
+        <td><code style="color:var(--gold);font-size:.82rem">${esc(s.slotId)}</code></td>
+        <td>${esc(s.label||s.slotId)}</td><td>${esc(s.parkingAreaName||'–')}</td><td>${s.floor??0}</td>
+        <td><span class="badge ${safeStatus(s.status)}">${esc(s.status)}</span></td>
+        <td style="font-size:.8rem;color:var(--muted)">${esc(s.reservedByDriverId||'–')}</td>
+        <td>${s.status!=='FREE'?`<button class="act-btn danger" data-free-slot="${esc(s.slotId)}">Free Up</button>`:'<span style="color:var(--green);font-size:.78rem">✓ Free</span>'}</td>
     </tr>`).join('');
 }
 
@@ -458,7 +461,7 @@ function filterSlots(status,btn) {
 async function freeSlot(slotId) {
     if(!confirm(`Free up slot ${slotId}?`)) return;
     try {
-        const r=await fetch(`${API_BASE}/api/slots/${slotId}/free`,{method:'PUT',headers:authHeaders()});
+        const r=await fetch(`${API_BASE}/api/slots/${encodeURIComponent(slotId)}/free`,{method:'PUT',headers:authHeaders()});
         if(r.ok){loadPage(currentPage);showToast(`Slot ${slotId} freed`,'success');}
         else showToast('Could not free slot','info');
     } catch(e){showToast('Error: '+e.message,'info');}
@@ -481,9 +484,9 @@ function renderBookings(bookings) {
     if(!bookings.length){tb.innerHTML='<tr><td colspan="7"><div class="empty"><i class="bi bi-calendar"></i>No bookings</div></td></tr>';return;}
     tb.innerHTML=bookings.map(b=>`<tr>
         <td>#${b.id}</td><td style="color:var(--muted);font-size:.82rem">${b.userId}</td>
-        <td><code style="color:var(--gold);font-size:.82rem">${b.slotId}</code></td>
-        <td>${b.vehiclePlate}</td>
-        <td><span class="badge ${b.status.toLowerCase()}">${b.status}</span></td>
+        <td><code style="color:var(--gold);font-size:.82rem">${esc(b.slotId)}</code></td>
+        <td>${esc(b.vehiclePlate)}</td>
+        <td><span class="badge ${safeStatus(b.status)}">${esc(b.status)}</span></td>
         <td style="color:var(--muted);font-size:.8rem">${formatDate(b.reservedAt)}</td>
         <td style="color:var(--muted);font-size:.8rem">${formatDate(b.expiresAt)}</td>
     </tr>`).join('');
@@ -504,9 +507,9 @@ async function loadUsers() {
         allUsers=await r.json();
         document.getElementById('usersCount').textContent=`${allUsers.length} users registered`;
         tb.innerHTML=allUsers.map(u=>`<tr>
-            <td>#${u.id}</td><td style="font-weight:500">${u.fullName}</td>
-            <td style="color:var(--muted)">${u.email}</td><td style="color:var(--muted)">${u.phone}</td>
-            <td><span class="badge ${u.role.toLowerCase()}">${u.role}</span></td>
+            <td>#${u.id}</td><td style="font-weight:500">${esc(u.fullName)}</td>
+            <td style="color:var(--muted)">${esc(u.email)}</td><td style="color:var(--muted)">${esc(u.phone)}</td>
+            <td><span class="badge ${safeStatus(u.role)}">${esc(u.role)}</span></td>
             <td style="color:var(--muted);font-size:.8rem">${formatDate(u.createdAt)}</td>
             <td><span class="badge ${u.active?'active':'cancelled'}">${u.active?'Active':'Inactive'}</span></td>
         </tr>`).join('');
@@ -522,7 +525,11 @@ function showToast(message,type='success') {
     const c=document.getElementById('toastContainer');
     const t=document.createElement('div');
     t.className=`toast ${type}`;
-    t.innerHTML=`<i class="bi bi-${type==='success'?'check-circle-fill':'info-circle-fill'}" style="color:var(--${type==='success'?'green':'blue'})"></i> ${message}`;
+    const icon=document.createElement('i');
+    icon.className=`bi bi-${type==='success'?'check-circle-fill':'info-circle-fill'}`;
+    icon.style.color=`var(--${type==='success'?'green':'blue'})`;
+    t.appendChild(icon);
+    t.appendChild(document.createTextNode(' ' + message));
     c.appendChild(t);
     setTimeout(()=>t.remove(),4000);
 }
@@ -534,7 +541,7 @@ async function loadSensorSlots() {
         allSlots = await r.json();
         const sel = document.getElementById('sensorSlotSelect');
         if(sel) sel.innerHTML = allSlots.map(s=>
-            `<option value="${s.slotId}">${s.slotId} — ${s.parkingAreaName||''} (${s.status})</option>`
+            `<option value="${esc(s.slotId)}">${esc(s.slotId)} — ${esc(s.parkingAreaName||'')} (${esc(s.status)})</option>`
         ).join('');
         const grid = document.getElementById('sensorSlotGrid');
         if(!grid) return;
@@ -543,13 +550,14 @@ async function loadSensorSlots() {
             const icon   = s.status==='FREE'?'bi-p-square':s.status==='RESERVED'?'bi-clock':'bi-car-front-fill';
             const action = s.status==='OCCUPIED'?'exit':'entry';
             const tip    = s.status==='OCCUPIED'?'Click → Car Exited':s.status==='FREE'?'Click → Car Entered':'Reserved – cannot toggle';
-            return `<div onclick="${s.status!=='RESERVED'?`quickToggle('${s.slotId}','${action}')`:''}"
+            const toggle = s.status!=='RESERVED' ? `data-sensor-slot="${esc(s.slotId)}" data-sensor-action="${action}"` : '';
+            return `<div ${toggle}
                 style="background:var(--surface2);border:1px solid ${color}33;border-radius:12px;padding:14px;text-align:center;cursor:${s.status!=='RESERVED'?'pointer':'default'};transition:border-color .2s"
                 onmouseover="this.style.borderColor='${color}'" onmouseout="this.style.borderColor='${color}33'">
                 <i class="bi ${icon}" style="font-size:1.5rem;color:${color};display:block;margin-bottom:8px"></i>
-                <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:.85rem">${s.slotId}</div>
-                <div style="font-size:.7rem;color:var(--muted);margin-top:2px">${s.parkingAreaName||''}</div>
-                <div style="font-size:.7rem;color:${color};margin-top:6px;font-weight:600">${s.status}</div>
+                <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:.85rem">${esc(s.slotId)}</div>
+                <div style="font-size:.7rem;color:var(--muted);margin-top:2px">${esc(s.parkingAreaName||'')}</div>
+                <div style="font-size:.7rem;color:${color};margin-top:6px;font-weight:600">${esc(s.status)}</div>
                 <div style="font-size:.65rem;color:var(--muted);margin-top:2px">${tip}</div>
             </div>`;
         }).join('');
@@ -557,13 +565,20 @@ async function loadSensorSlots() {
 }
 
 async function quickToggle(slotId, action) {
-    await fetch(`${API_BASE}/api/sensor/${action}`,{
-        method:'POST', headers:authHeaders(),
-        body: JSON.stringify({slotId, sensorId:'ADMIN_SIM'})
-    });
-    const emoji = action==='entry'?'🔴':'🟢';
-    showToast(`${emoji} ${slotId} → ${action==='entry'?'OCCUPIED':'FREE'}`, 'success');
-    loadSensorSlots();
+    try {
+        const data = action === 'entry'
+            ? await apiSensorEntry(slotId)
+            : await apiSensorExit(slotId);
+        if (!data.success) {
+            showToast(data.message || 'Sensor action failed', 'error');
+            return;
+        }
+        const emoji = action==='entry'?'🔴':'🟢';
+        showToast(`${emoji} ${slotId} → ${action==='entry'?'OCCUPIED':'FREE'}`, 'success');
+        loadSensorSlots();
+    } catch(e) {
+        showToast(e.message || 'Sensor action failed', 'error');
+    }
 }
 
 async function triggerSensor(action) {
@@ -590,11 +605,12 @@ async function triggerSensor(action) {
         }
         if(data.success){
             result.style.cssText='display:block;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:var(--green);padding:12px 14px;border-radius:9px;font-size:.85rem';
-            result.innerHTML='<i class="bi bi-check-circle-fill"></i> ' + data.message;
+            result.textContent = data.message || 'Success';
             loadSensorSlots();
         } else {
             result.style.cssText='display:block;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--red);padding:12px 14px;border-radius:9px;font-size:.85rem';
-            result.innerHTML='<i class="bi bi-exclamation-circle-fill"></i> ' + (data.message||'Failed — HTTP '+r.status);
+            result.textContent = '';
+            result.appendChild(document.createTextNode(data.message || 'Failed'));
         }
     } catch(e){
         console.error('triggerSensor error:', e);
@@ -610,7 +626,7 @@ async function checkSlotStatus() {
     result.style.display='block';
     result.innerHTML='<span style="color:var(--muted);font-size:.85rem">Checking...</span>';
     try {
-        const r = await fetch(`${API_BASE}/api/sensor/status/${slotId}`, {headers: authHeaders()});
+        const r = await fetch(`${API_BASE}/api/sensor/status/${encodeURIComponent(slotId)}`, {headers: authHeaders()});
         const text = await r.text();
         console.log('SlotStatus HTTP', r.status, text);
         let data;
@@ -620,23 +636,28 @@ async function checkSlotStatus() {
             return;
         }
         if(!data.success){
-            result.innerHTML='<div style="color:var(--red);font-size:.85rem"><i class="bi bi-exclamation-circle-fill"></i> ' + (data.message||'Slot not found') + '<br><small style="color:var(--muted)">Check the slot ID format — e.g. LOT_A-01, CHK_A-01, MBA_A-01</small></div>';
+            result.textContent = data.message || 'Slot not found';
             return;
         }
         const color = data.status==='FREE'?'var(--green)':data.status==='RESERVED'?'var(--orange)':'var(--red)';
-        const icon  = data.status==='FREE'?'check-circle-fill':data.status==='RESERVED'?'clock-fill':'car-front-fill';
         result.innerHTML='<div style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:16px">' +
             '<div style="display:flex;align-items:center;justify-content:space-between">' +
-            '<div style="font-family:\'Syne\',sans-serif;font-weight:700;font-size:1.1rem">' + data.slotId + '</div>' +
-            '<span style="background:' + color + '22;color:' + color + ';padding:4px 12px;border-radius:20px;font-size:.75rem;font-weight:700">' +
-            '<i class="bi bi-' + icon + '" style="margin-right:4px"></i>' + data.status + '</span></div>' +
-            '<div style="font-size:.8rem;color:var(--muted);margin-top:6px"><i class="bi bi-building" style="margin-right:4px"></i>' + (data.area||'Unknown area') + '</div>' +
+            '<div style="font-family:\'Syne\',sans-serif;font-weight:700;font-size:1.1rem">' + esc(data.slotId) + '</div>' +
+            '<span style="background:' + color + '22;color:' + color + ';padding:4px 12px;border-radius:20px;font-size:.75rem;font-weight:700">' + esc(data.status) + '</span></div>' +
+            '<div style="font-size:.8rem;color:var(--muted);margin-top:6px">' + esc(data.area||'Unknown area') + '</div>' +
             '</div>';
     } catch(e){
         console.error('checkSlotStatus error:', e);
         result.innerHTML='<div style="color:var(--red);font-size:.85rem"><i class="bi bi-wifi-off"></i> Cannot reach server — is Spring Boot running on port 8080?</div>';
     }
 }
+
+document.addEventListener('click', function(e) {
+    const freeBtn = e.target.closest('[data-free-slot]');
+    if (freeBtn) { freeSlot(freeBtn.dataset.freeSlot); return; }
+    const sensorTile = e.target.closest('[data-sensor-slot]');
+    if (sensorTile) { quickToggle(sensorTile.dataset.sensorSlot, sensorTile.dataset.sensorAction); }
+});
 
 loadOverview();
 </script>
@@ -647,10 +668,12 @@ loadOverview();
 <script>
 function connectWebSocket() {
     try {
+        const tk = getToken();
+        if (!tk) return;
         const socket = new SockJS(API_BASE + '/ws');
         const stomp  = Stomp.over(socket);
         stomp.debug  = null;
-        stomp.connect({'Authorization': 'Bearer ' + token}, function() {
+        stomp.connect({'Authorization': 'Bearer ' + tk}, function() {
             document.getElementById('wsDot').classList.add('connected');
             document.getElementById('wsStatus').textContent = 'Live updates on';
             console.log('📡 Admin WebSocket connected');

@@ -8,73 +8,130 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
     <style>
         :root {
-            --gold: #F5C842; --black: #0A0A0F; --surface: #111118;
-            --surface2: #1A1A24; --border: #2a2a38; --text: #F0EDE8;
-            --muted: #7A7A90; --green: #22c55e; --red: #ef4444; --orange: #f97316;
+            --gold:#F5C842; --black:#0A0A0F; --surface:#111118; --surface2:#1A1A24;
+            --border:#2a2a38; --text:#F0EDE8; --muted:#7A7A90;
+            --green:#22c55e; --red:#ef4444; --orange:#f97316; --blue:#3b82f6;
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'DM Sans', sans-serif; background: var(--black); color: var(--text); min-height: 100vh; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'DM Sans',sans-serif; background:var(--black); color:var(--text); min-height:100vh; }
 
-        .navbar { height: 60px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 24px; gap: 12px; position: sticky; top: 0; z-index: 100; }
-        .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-        .nav-p { width: 36px; height: 36px; background: var(--gold); border-radius: 9px; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.1rem; color: var(--black); }
-        .nav-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; color: var(--text); }
-        .nav-title span { color: var(--gold); }
-        .nav-spacer { flex: 1; }
-        .nav-btn { height: 36px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.83rem; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s; text-decoration: none; }
-        .nav-btn:hover { border-color: var(--gold); color: var(--gold); }
-        .nav-btn.gold { background: var(--gold); color: var(--black); border-color: var(--gold); font-weight: 600; }
-        .nav-btn.gold:hover { background: #e8b830; }
+        .navbar { height:60px; background:var(--surface); border-bottom:1px solid var(--border); display:flex; align-items:center; padding:0 24px; gap:12px; position:sticky; top:0; z-index:100; }
+        .nav-brand { display:flex; align-items:center; gap:10px; text-decoration:none; }
+        .nav-p { width:36px; height:36px; background:var(--gold); border-radius:9px; display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-weight:800; font-size:1.1rem; color:var(--black); }
+        .nav-title { font-family:'Syne',sans-serif; font-weight:700; font-size:1rem; color:var(--text); }
+        .nav-title span { color:var(--gold); }
+        .nav-spacer { flex:1; }
+        .nav-btn { height:36px; padding:0 14px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--text); font-family:'DM Sans',sans-serif; font-size:0.83rem; cursor:pointer; display:flex; align-items:center; gap:6px; transition:all 0.2s; text-decoration:none; }
+        .nav-btn:hover { border-color:var(--gold); color:var(--gold); }
+        .nav-btn.gold { background:var(--gold); color:var(--black); border-color:var(--gold); font-weight:600; }
 
-        .container { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
-        .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 28px; flex-wrap: wrap; gap: 12px; }
-        .page-title { font-family: 'Syne', sans-serif; font-size: 1.8rem; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
-        .page-title span { color: var(--gold); }
+        .container { max-width:1100px; margin:0 auto; padding:32px 24px; }
+        .page-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:28px; flex-wrap:wrap; gap:12px; }
+        .page-title { font-family:'Syne',sans-serif; font-size:1.8rem; font-weight:800; letter-spacing:-0.5px; }
+        .page-title span { color:var(--gold); }
 
-        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 28px; }
-        .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: flex; align-items: center; gap: 14px; transition: border-color 0.2s; }
-        .stat-card:hover { border-color: var(--gold); }
-        .stat-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
-        .stat-num { font-family: 'Syne', sans-serif; font-size: 1.6rem; font-weight: 800; line-height: 1; }
-        .stat-lbl { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+        .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:28px; }
+        .stat-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px; display:flex; align-items:center; gap:14px; }
+        .stat-icon { width:44px; height:44px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0; }
+        .stat-num { font-family:'Syne',sans-serif; font-size:1.6rem; font-weight:800; line-height:1; }
+        .stat-lbl { font-size:0.75rem; color:var(--muted); margin-top:2px; }
 
-        .filter-bar { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
-        .filter-tab { padding: 7px 16px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 0.83rem; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
-        .filter-tab:hover { border-color: var(--text); color: var(--text); }
-        .filter-tab.active { background: var(--gold); border-color: var(--gold); color: var(--black); font-weight: 600; }
+        .filter-bar { display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
+        .filter-tab { padding:7px 16px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--muted); font-size:0.83rem; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; gap:6px; }
+        .filter-tab:hover { border-color:var(--text); color:var(--text); }
+        .filter-tab.active { background:var(--gold); border-color:var(--gold); color:var(--black); font-weight:600; }
 
-        .bookings-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
-        .booking-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; transition: all 0.2s; }
-        .booking-card:hover { border-color: var(--gold); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
-        .card-top { padding: 16px; display: flex; align-items: flex-start; justify-content: space-between; border-bottom: 1px solid var(--border); }
-        .card-slot { font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 800; color: var(--gold); line-height: 1; margin-bottom: 4px; }
-        .card-area { font-size: 0.78rem; color: var(--muted); }
-        .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 4px; }
-        .status-PENDING   { background: rgba(249,115,22,0.15); color: var(--orange); }
-        .status-ACTIVE    { background: rgba(34,197,94,0.15);  color: var(--green); }
-        .status-CANCELLED { background: rgba(239,68,68,0.15);  color: var(--red); }
-        .status-COMPLETED { background: rgba(122,122,144,0.15); color: var(--muted); }
-        .card-body { padding: 14px 16px; }
-        .detail-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-        .detail-icon { width: 30px; height: 30px; background: var(--surface2); border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; color: var(--gold); flex-shrink: 0; }
-        .detail-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
-        .detail-value { font-size: 0.88rem; color: var(--text); font-weight: 500; }
-        .card-footer { padding: 12px 16px; border-top: 1px solid var(--border); }
-        .cancel-btn { width: 100%; padding: 9px; background: transparent; border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; color: var(--red); font-family: 'DM Sans', sans-serif; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
-        .cancel-btn:hover { background: rgba(239,68,68,0.1); border-color: var(--red); }
-        .active-badge { width: 100%; padding: 9px; background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2); border-radius: 8px; color: var(--green); font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .bookings-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:16px; }
+        .booking-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; transition:all 0.2s; }
+        .booking-card:hover { border-color:var(--gold); transform:translateY(-2px); box-shadow:0 8px 32px rgba(0,0,0,0.3); }
+        .card-top { padding:16px; display:flex; align-items:flex-start; justify-content:space-between; border-bottom:1px solid var(--border); }
+        .card-slot { font-family:'Syne',sans-serif; font-size:1.2rem; font-weight:800; color:var(--gold); line-height:1; margin-bottom:4px; }
+        .card-area { font-size:0.78rem; color:var(--muted); }
+        .status-badge { padding:4px 10px; border-radius:20px; font-size:0.7rem; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; display:flex; align-items:center; gap:4px; white-space:nowrap; }
+        .status-PENDING   { background:rgba(249,115,22,0.15); color:var(--orange); }
+        .status-ACTIVE    { background:rgba(34,197,94,0.15);  color:var(--green); }
+        .status-CANCELLED { background:rgba(239,68,68,0.15);  color:var(--red); }
+        .status-COMPLETED { background:rgba(122,122,144,0.15);color:var(--muted); }
+        .card-body { padding:14px 16px; }
+        .detail-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+        .detail-icon { width:30px; height:30px; background:var(--surface2); border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:0.85rem; color:var(--gold); flex-shrink:0; }
+        .detail-label { font-size:0.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; }
+        .detail-value { font-size:0.88rem; font-weight:500; }
+        .card-footer { padding:12px 16px; border-top:1px solid var(--border); display:flex; gap:8px; }
 
-        .empty-state { text-align: center; padding: 80px 20px; color: var(--muted); }
-        .empty-state i { font-size: 3rem; margin-bottom: 16px; display: block; }
-        .empty-state p { font-size: 0.95rem; margin-bottom: 20px; }
-        .loading-state { text-align: center; padding: 60px 20px; color: var(--muted); }
-        .spinner { width: 32px; height: 32px; border: 2px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 12px; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        /* Payment badge on card */
+        .pay-badge { display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border-radius:20px; font-size:0.68rem; font-weight:600; }
+        .pay-badge.unpaid    { background:rgba(239,68,68,0.12);  color:var(--red); }
+        .pay-badge.paid      { background:rgba(34,197,94,0.12);  color:var(--green); }
+        .pay-badge.pending   { background:rgba(249,115,22,0.12); color:var(--orange); }
 
-        @media (max-width: 768px) {
-            .stats-grid { grid-template-columns: repeat(2, 1fr); }
-            .page-header { flex-direction: column; align-items: flex-start; }
-        }
+        .btn { flex:1; padding:9px 0; border-radius:8px; font-size:0.85rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s; border:none; font-family:'DM Sans',sans-serif; font-weight:600; }
+        .btn-pay    { background:var(--green); color:white; }
+        .btn-pay:hover { background:#16a34a; }
+        .btn-cancel { background:transparent; border:1px solid rgba(239,68,68,0.3); color:var(--red); }
+        .btn-cancel:hover { background:rgba(239,68,68,0.1); border-color:var(--red); }
+        .btn-paid   { background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.2); color:var(--green); cursor:default; }
+
+        .empty-state { text-align:center; padding:80px 20px; color:var(--muted); }
+        .empty-state i { font-size:3rem; margin-bottom:16px; display:block; }
+        .loading-state { text-align:center; padding:60px 20px; color:var(--muted); }
+        .spinner { width:32px; height:32px; border:2px solid var(--border); border-top-color:var(--gold); border-radius:50%; animation:spin 0.7s linear infinite; margin:0 auto 12px; }
+        @keyframes spin { to { transform:rotate(360deg); } }
+
+        /* M-Pesa Payment Modal */
+        .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:9999; display:none; align-items:center; justify-content:center; backdrop-filter:blur(6px); }
+        .modal-overlay.show { display:flex; }
+        .modal-box { background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:32px; width:440px; max-width:95vw; position:relative; animation:modalIn 0.25s ease; }
+        @keyframes modalIn { from { opacity:0; transform:scale(0.93) translateY(12px); } to { opacity:1; transform:scale(1) translateY(0); } }
+
+        /* Green top bar for M-Pesa */
+        .modal-box.mpesa-modal::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,transparent,var(--green),transparent); border-radius:20px 20px 0 0; }
+
+        .mpesa-header { display:flex; align-items:center; gap:14px; margin-bottom:24px; }
+        .mpesa-logo { width:52px; height:52px; background:linear-gradient(135deg,#00a651,#007a3d); border-radius:14px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.75rem; color:white; letter-spacing:0.5px; flex-shrink:0; }
+        .mpesa-title { font-family:'Syne',sans-serif; font-size:1.3rem; font-weight:700; }
+        .mpesa-sub { font-size:0.85rem; color:var(--muted); margin-top:2px; }
+
+        .amount-display { background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; }
+        .amount-label { font-size:0.75rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.8px; }
+        .amount-value { font-family:'Syne',sans-serif; font-size:1.8rem; font-weight:800; color:var(--green); }
+        .amount-slot  { font-size:0.8rem; color:var(--muted); margin-top:2px; }
+
+        .modal-field { margin-bottom:16px; }
+        .modal-field label { display:block; font-size:0.75rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.8px; margin-bottom:7px; }
+        .modal-field input { width:100%; padding:13px 14px; background:var(--surface2); border:1px solid var(--border); border-radius:10px; color:var(--text); font-family:'DM Sans',sans-serif; font-size:0.95rem; outline:none; transition:border-color 0.2s; }
+        .modal-field input:focus { border-color:var(--green); box-shadow:0 0 0 3px rgba(34,197,94,0.1); }
+        .modal-field input::placeholder { color:#3a3a50; }
+
+        .modal-hint { font-size:0.78rem; color:var(--muted); margin-bottom:20px; display:flex; align-items:flex-start; gap:8px; line-height:1.5; }
+        .modal-hint i { color:var(--green); margin-top:1px; flex-shrink:0; }
+
+        .btn-mpesa { width:100%; padding:14px; background:linear-gradient(135deg,#00a651,#007a3d); border:none; border-radius:10px; color:white; font-family:'Syne',sans-serif; font-size:1rem; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:all 0.2s; }
+        .btn-mpesa:hover { opacity:0.9; transform:translateY(-1px); }
+        .btn-mpesa:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
+
+        .modal-cancel-link { display:block; text-align:center; margin-top:12px; color:var(--muted); font-size:0.83rem; cursor:pointer; }
+        .modal-cancel-link:hover { color:var(--text); }
+
+        /* Waiting state */
+        .waiting-state { text-align:center; padding:20px 0; }
+        .pulse-ring { width:70px; height:70px; border-radius:50%; background:rgba(34,197,94,0.1); border:2px solid var(--green); display:flex; align-items:center; justify-content:center; margin:0 auto 16px; animation:pulse 1.5s infinite; font-size:1.8rem; }
+        @keyframes pulse { 0%,100% { transform:scale(1); opacity:1; } 50% { transform:scale(1.08); opacity:0.8; } }
+        .waiting-title { font-family:'Syne',sans-serif; font-size:1.1rem; font-weight:700; margin-bottom:6px; }
+        .waiting-sub { color:var(--muted); font-size:0.85rem; line-height:1.6; }
+        .waiting-dots::after { content:''; animation:dots 1.5s infinite; }
+        @keyframes dots { 0% { content:''; } 33% { content:'.'; } 66% { content:'..'; } 100% { content:'...'; } }
+
+        /* Success state */
+        .success-state { text-align:center; padding:20px 0; }
+        .success-icon { width:70px; height:70px; border-radius:50%; background:rgba(34,197,94,0.15); border:2px solid var(--green); display:flex; align-items:center; justify-content:center; margin:0 auto 16px; font-size:2rem; }
+        .receipt-box { background:var(--surface2); border:1px solid rgba(34,197,94,0.2); border-radius:10px; padding:14px; margin:16px 0; text-align:left; }
+        .receipt-row { display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:6px; }
+        .receipt-row:last-child { margin-bottom:0; }
+        .receipt-row .rk { color:var(--muted); }
+        .receipt-row .rv { font-weight:600; color:var(--green); }
+
+        @media(max-width:768px) { .stats-grid { grid-template-columns:repeat(2,1fr); } }
     </style>
 </head>
 <body>
@@ -86,9 +143,8 @@
     </a>
     <div class="nav-spacer"></div>
     <a href="dashboard.html" class="nav-btn gold"><i class="bi bi-map"></i> Find Parking</a>
-    <a href="profile.html" class="nav-btn"><i class="bi bi-person-fill"></i> Profile</a>
     <button class="nav-btn" onclick="logout()" style="border-color:rgba(239,68,68,0.3);color:#ef4444">
-        <i class="bi bi-box-arrow-right"></i>
+        <i class="bi bi-box-arrow-right"></i> Logout
     </button>
 </nav>
 
@@ -96,24 +152,24 @@
     <div class="page-header">
         <div>
             <div class="page-title">My <span>Bookings</span></div>
-            <div style="color:var(--muted);font-size:0.88rem;margin-top:4px">Track and manage your parking reservations</div>
+            <div style="color:var(--muted);font-size:0.88rem;margin-top:4px">Track and pay for your parking reservations</div>
         </div>
         <a href="dashboard.html" class="nav-btn gold" style="height:40px;padding:0 18px;font-size:0.9rem">
             <i class="bi bi-plus-circle"></i> New Booking
         </a>
     </div>
 
-    <div class="stats-grid" id="statsGrid">
+    <div class="stats-grid">
         <div class="stat-card"><div class="stat-icon" style="background:rgba(245,200,66,0.1)"><i class="bi bi-calendar-check" style="color:var(--gold)"></i></div><div><div class="stat-num" id="sTotal" style="color:var(--text)">–</div><div class="stat-lbl">Total</div></div></div>
         <div class="stat-card"><div class="stat-icon" style="background:rgba(34,197,94,0.1)"><i class="bi bi-check-circle" style="color:var(--green)"></i></div><div><div class="stat-num" id="sActive" style="color:var(--green)">–</div><div class="stat-lbl">Active</div></div></div>
-        <div class="stat-card"><div class="stat-icon" style="background:rgba(249,115,22,0.1)"><i class="bi bi-hourglass-split" style="color:var(--orange)"></i></div><div><div class="stat-num" id="sPending" style="color:var(--orange)">–</div><div class="stat-lbl">Pending</div></div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:rgba(34,197,94,0.1)"><i class="bi bi-cash-stack" style="color:var(--green)"></i></div><div><div class="stat-num" id="sPaid" style="color:var(--green)">–</div><div class="stat-lbl">Paid</div></div></div>
         <div class="stat-card"><div class="stat-icon" style="background:rgba(239,68,68,0.1)"><i class="bi bi-x-circle" style="color:var(--red)"></i></div><div><div class="stat-num" id="sCancelled" style="color:var(--red)">–</div><div class="stat-lbl">Cancelled</div></div></div>
     </div>
 
     <div class="filter-bar">
-        <button class="filter-tab" id="tab-ALL"       onclick="filterBy('ALL')"><i class="bi bi-grid"></i> All</button>
+        <button class="filter-tab active" id="tab-ALL"       onclick="filterBy('ALL')"><i class="bi bi-grid"></i> All</button>
         <button class="filter-tab"        id="tab-PENDING"   onclick="filterBy('PENDING')"><i class="bi bi-hourglass-split"></i> Pending</button>
-        <button class="filter-tab active" id="tab-ACTIVE"    onclick="filterBy('ACTIVE')"><i class="bi bi-check-circle"></i> Active</button>
+        <button class="filter-tab"        id="tab-ACTIVE"    onclick="filterBy('ACTIVE')"><i class="bi bi-check-circle"></i> Active</button>
         <button class="filter-tab"        id="tab-CANCELLED" onclick="filterBy('CANCELLED')"><i class="bi bi-x-circle"></i> Cancelled</button>
     </div>
 
@@ -125,13 +181,112 @@
     </div>
 </div>
 
+<!-- M-Pesa Payment Modal -->
+<div class="modal-overlay" id="payModal">
+    <div class="modal-box mpesa-modal">
+
+        <!-- Step 1: Enter phone -->
+        <div id="stepPhone">
+            <div class="mpesa-header">
+                <div class="mpesa-logo">M-PESA</div>
+                <div>
+                    <div class="mpesa-title">Pay with M-Pesa</div>
+                    <div class="mpesa-sub">STK Push to your phone</div>
+                </div>
+            </div>
+            <div class="amount-display">
+                <div>
+                    <div class="amount-label">Amount Due</div>
+                    <div class="amount-slot" id="paySlotLabel"></div>
+                </div>
+                <div style="text-align:right">
+                    <div class="amount-value">KES <span id="payAmount">100</span></div>
+                </div>
+            </div>
+            <div class="modal-field">
+                <label>M-Pesa Phone Number</label>
+                <input type="tel" id="mpesaPhone" placeholder="0712 345 678"
+                       onkeydown="if(event.key==='Enter') submitPayment()">
+            </div>
+            <div class="modal-hint">
+                <i class="bi bi-info-circle-fill"></i>
+                <span>You will receive an M-Pesa prompt on your phone. Enter your PIN to complete the payment. The prompt expires in 60 seconds.</span>
+            </div>
+            <div id="phoneError" style="display:none;color:var(--red);font-size:0.83rem;margin-bottom:14px;padding:10px 12px;background:rgba(239,68,68,0.08);border-radius:8px"></div>
+            <button class="btn-mpesa" id="payBtn" onclick="submitPayment()">
+                <i class="bi bi-phone-fill"></i> Send STK Push
+            </button>
+            <span class="modal-cancel-link" onclick="closePayModal()">Cancel</span>
+        </div>
+
+        <!-- Step 2: Waiting for PIN -->
+        <div id="stepWaiting" style="display:none">
+            <div class="waiting-state">
+                <div class="pulse-ring">📱</div>
+                <div class="waiting-title">Check your phone!</div>
+                <div class="waiting-sub">
+                    An M-Pesa prompt has been sent to<br>
+                    <strong style="color:var(--text)" id="waitingPhone"></strong><br><br>
+                    Enter your <strong style="color:var(--green)">M-Pesa PIN</strong> to complete payment<span class="waiting-dots"></span>
+                </div>
+                <div style="margin-top:20px;color:var(--muted);font-size:0.78rem">
+                    <i class="bi bi-clock"></i> Prompt expires in <span id="countdown">60</span>s
+                </div>
+                <div style="margin-top:16px">
+                    <span class="modal-cancel-link" onclick="cancelWaiting()">Didn't get the prompt? Try again</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Success -->
+        <div id="stepSuccess" style="display:none">
+            <div class="success-state">
+                <div class="success-icon">✅</div>
+                <div class="waiting-title" style="color:var(--green)">Payment Successful!</div>
+                <div class="receipt-box" id="receiptBox"></div>
+                <button class="btn-mpesa" style="margin-top:8px" onclick="closePayModal()">
+                    <i class="bi bi-check-circle-fill"></i> Done
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 4: Failed -->
+        <div id="stepFailed" style="display:none">
+            <div class="success-state">
+                <div class="success-icon" style="background:rgba(239,68,68,0.1);border-color:var(--red)">❌</div>
+                <div class="waiting-title" style="color:var(--red)">Payment Failed</div>
+                <div class="waiting-sub" id="failReason" style="margin-top:8px"></div>
+                <button class="btn-mpesa" style="margin-top:20px;background:linear-gradient(135deg,#ef4444,#b91c1c)" onclick="retryPayment()">
+                    <i class="bi bi-arrow-clockwise"></i> Try Again
+                </button>
+                <span class="modal-cancel-link" onclick="closePayModal()">Cancel</span>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="js/config.js"></script>
 <script src="js/api.js"></script>
 <script>
     let allBookings = [];
+    let currentBookingId = null;
+    let currentCheckoutId = null;
+    let pollInterval = null;
+    let countdownInterval = null;
 
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', function() {
         if (!getToken()) { window.location.href = 'index.html'; return; }
         loadBookings();
+        document.getElementById('content').addEventListener('click', function(e) {
+            var payBtn = e.target.closest('[data-pay-id]');
+            if (payBtn) {
+                openPayModal(Number(payBtn.dataset.payId), payBtn.dataset.paySlot, Number(payBtn.dataset.payAmount));
+                return;
+            }
+            var cancelBtn = e.target.closest('[data-cancel-id]');
+            if (cancelBtn) cancelBooking(Number(cancelBtn.dataset.cancelId));
+        });
     });
 
     async function loadBookings() {
@@ -139,18 +294,18 @@
             const data = await apiGetMyBookings();
             allBookings = Array.isArray(data) ? data : [];
             updateStats(allBookings);
-            filterBy('ACTIVE');
-        } catch (e) {
+            filterBy('ALL');
+        } catch(e) {
             allBookings = [];
             updateStats([]);
-            filterBy('ACTIVE');
+            filterBy('ALL');
         }
     }
 
     function updateStats(b) {
         document.getElementById('sTotal').textContent     = b.length;
         document.getElementById('sActive').textContent    = b.filter(x => x.status === 'ACTIVE').length;
-        document.getElementById('sPending').textContent   = b.filter(x => x.status === 'PENDING').length;
+        document.getElementById('sPaid').textContent      = b.filter(x => x.paymentStatus === 'PAID').length;
         document.getElementById('sCancelled').textContent = b.filter(x => x.status === 'CANCELLED').length;
     }
 
@@ -166,55 +321,195 @@
         if (!bookings.length) {
             el.innerHTML = `<div class="empty-state">
                 <i class="bi bi-calendar-x"></i>
-                <p>No ${status !== 'ALL' ? status.toLowerCase() : ''} bookings found</p>
-                <a href="dashboard.html" class="nav-btn gold" style="display:inline-flex;height:40px;padding:0 20px">
-                    <i class="bi bi-search"></i> Find a Slot
+                <p>No ${status !== 'ALL' ? status.toLowerCase() + ' ' : ''}bookings found</p>
+                <a href="dashboard.html" class="nav-btn gold" style="display:inline-flex;height:40px;padding:0 20px;text-decoration:none">
+                    <i class="bi bi-search"></i>&nbsp;Find a Slot
                 </a>
             </div>`;
             return;
         }
-        el.innerHTML = `<div class="bookings-grid">${bookings.map(bookingCard).join('')}</div>`;
+        el.innerHTML = '<div class="bookings-grid">' + bookings.map(bookingCard).join('') + '</div>';
     }
 
     function bookingCard(b) {
-        const icon = b.status === 'PENDING' ? 'hourglass-split' : b.status === 'ACTIVE' ? 'check-circle-fill' : 'x-circle-fill';
-        const footer = b.status === 'PENDING'
-            ? `<div class="card-footer"><button class="cancel-btn" onclick="cancelBooking(${b.id})"><i class="bi bi-x-circle"></i> Cancel Booking</button></div>`
-            : b.status === 'ACTIVE'
-            ? `<div class="card-footer"><div class="active-badge"><i class="bi bi-check-circle-fill"></i> Currently Parked</div></div>`
-            : '';
-        return `
-        <div class="booking-card">
+        const statusIcon = b.status === 'PENDING' ? 'hourglass-split' : b.status === 'ACTIVE' ? 'check-circle-fill' : 'x-circle-fill';
+        const isPaid     = b.paymentStatus === 'PAID';
+        const canPay     = (b.status === 'PENDING' || b.status === 'ACTIVE') && !isPaid;
+        const canCancel  = b.status === 'PENDING';
+        const amount     = b.totalAmount || 100;
+        const statusClass = ['PENDING','ACTIVE','CANCELLED'].includes(b.status) ? b.status : 'PENDING';
+
+        const payBadge = isPaid
+            ? '<span class="pay-badge paid"><i class="bi bi-check-circle-fill"></i> PAID</span>'
+            : b.paymentStatus === 'PENDING'
+            ? '<span class="pay-badge pending"><i class="bi bi-hourglass-split"></i> PAYING...</span>'
+            : '<span class="pay-badge unpaid"><i class="bi bi-exclamation-circle-fill"></i> UNPAID</span>';
+
+        let footer = '';
+        if (canPay && canCancel) {
+            footer = `<div class="card-footer">
+                <button class="btn btn-pay" data-pay-id="${b.id}" data-pay-slot="${escapeHtml(b.slotId)}" data-pay-amount="${amount}"><i class="bi bi-phone-fill"></i> Pay M-Pesa</button>
+                <button class="btn btn-cancel" data-cancel-id="${b.id}"><i class="bi bi-x-circle"></i> Cancel</button>
+            </div>`;
+        } else if (canPay) {
+            footer = `<div class="card-footer">
+                <button class="btn btn-pay" data-pay-id="${b.id}" data-pay-slot="${escapeHtml(b.slotId)}" data-pay-amount="${amount}"><i class="bi bi-phone-fill"></i> Pay with M-Pesa</button>
+            </div>`;
+        } else if (isPaid) {
+            footer = `<div class="card-footer">
+                <div class="btn btn-paid"><i class="bi bi-check-circle-fill"></i> Payment Complete</div>
+            </div>`;
+        }
+
+        return `<div class="booking-card">
             <div class="card-top">
                 <div>
-                    <div class="card-slot">${b.slotId}</div>
-                    <div class="card-area"><i class="bi bi-building" style="margin-right:4px"></i>${b.parkingAreaName || 'Parking Area'}</div>
+                    <div class="card-slot">${escapeHtml(b.slotId)}</div>
+                    <div class="card-area"><i class="bi bi-building" style="margin-right:4px"></i>${escapeHtml(b.parkingAreaName || 'Parking Area')}</div>
                 </div>
-                <div class="status-badge status-${b.status}"><i class="bi bi-${icon}"></i> ${b.status}</div>
+                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+                    <div class="status-badge status-${statusClass}"><i class="bi bi-${statusIcon}"></i> ${escapeHtml(b.status)}</div>
+                    ${payBadge}
+                </div>
             </div>
             <div class="card-body">
                 <div class="detail-row">
                     <div class="detail-icon"><i class="bi bi-car-front-fill"></i></div>
-                    <div><div class="detail-label">Vehicle Plate</div><div class="detail-value">${b.vehiclePlate}</div></div>
-                </div>
-                <div class="detail-row">
-                    <div class="detail-icon"><i class="bi bi-layers-fill"></i></div>
-                    <div><div class="detail-label">Floor</div><div class="detail-value">Floor ${b.floor ?? 0}</div></div>
+                    <div><div class="detail-label">Vehicle Plate</div><div class="detail-value">${escapeHtml(b.vehiclePlate)}</div></div>
                 </div>
                 <div class="detail-row">
                     <div class="detail-icon"><i class="bi bi-clock-fill"></i></div>
                     <div><div class="detail-label">Reserved At</div><div class="detail-value">${new Date(b.reservedAt).toLocaleString('en-KE')}</div></div>
                 </div>
-                ${b.expiresAt ? `<div class="detail-row"><div class="detail-icon"><i class="bi bi-hourglass-fill"></i></div><div><div class="detail-label">Expires At</div><div class="detail-value">${new Date(b.expiresAt).toLocaleString('en-KE')}</div></div></div>` : ''}
-                ${b.totalAmount > 0 ? `<div class="detail-row"><div class="detail-icon"><i class="bi bi-cash-stack"></i></div><div><div class="detail-label">Amount</div><div class="detail-value" style="color:var(--green);font-weight:700">KES ${b.totalAmount}</div></div></div>` : ''}
+                ${b.totalAmount ? `<div class="detail-row">
+                    <div class="detail-icon"><i class="bi bi-cash-stack"></i></div>
+                    <div><div class="detail-label">Amount</div><div class="detail-value" style="color:var(--green);font-weight:700">KES ${b.totalAmount}</div></div>
+                </div>` : ''}
+                ${b.mpesaReceipt ? `<div class="detail-row">
+                    <div class="detail-icon"><i class="bi bi-receipt"></i></div>
+                    <div><div class="detail-label">M-Pesa Receipt</div><div class="detail-value" style="color:var(--green)">${escapeHtml(b.mpesaReceipt)}</div></div>
+                </div>` : ''}
             </div>
             ${footer}
         </div>`;
     }
 
+    // ── M-Pesa Modal ──────────────────────────────────────────────────────
+    function openPayModal(bookingId, slotId, amount) {
+        currentBookingId = bookingId;
+        showStep('stepPhone');
+        document.getElementById('payAmount').textContent  = amount;
+        document.getElementById('paySlotLabel').textContent = 'Slot ' + slotId;
+        document.getElementById('mpesaPhone').value = '';
+        document.getElementById('phoneError').style.display = 'none';
+
+        // Pre-fill user phone if available
+        const user = getUser();
+        if (user && user.phone) document.getElementById('mpesaPhone').value = user.phone;
+
+        document.getElementById('payModal').classList.add('show');
+        setTimeout(() => document.getElementById('mpesaPhone').focus(), 150);
+    }
+
+    function closePayModal() {
+        document.getElementById('payModal').classList.remove('show');
+        clearPolling();
+        loadBookings(); // refresh card states
+    }
+
+    function showStep(step) {
+        ['stepPhone','stepWaiting','stepSuccess','stepFailed'].forEach(s => {
+            document.getElementById(s).style.display = s === step ? 'block' : 'none';
+        });
+    }
+
+    async function submitPayment() {
+        const phone  = document.getElementById('mpesaPhone').value.trim();
+        const amount = parseFloat(document.getElementById('payAmount').textContent);
+        const errEl  = document.getElementById('phoneError');
+
+        if (!phone) { errEl.textContent = 'Please enter your M-Pesa phone number'; errEl.style.display = 'block'; return; }
+        if (phone.length < 9) { errEl.textContent = 'Enter a valid phone number (e.g. 0712345678)'; errEl.style.display = 'block'; return; }
+
+        errEl.style.display = 'none';
+        const btn = document.getElementById('payBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span style="width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;display:inline-block;animation:spin 0.6s linear infinite"></span> Sending...';
+
+        try {
+            const data = await apiMpesaPay(currentBookingId, phone);
+
+            if (data.success) {
+                currentCheckoutId = data.checkoutId;
+                document.getElementById('waitingPhone').textContent = phone;
+                showStep('stepWaiting');
+                startCountdown(60);
+                startPolling(data.checkoutId);
+            } else {
+                errEl.textContent = data.message || 'Failed to send STK push. Check your credentials.';
+                errEl.style.display = 'block';
+            }
+        } catch(e) {
+            errEl.textContent = e.message || 'Cannot connect to server. Is Spring Boot running?';
+            errEl.style.display = 'block';
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-phone-fill"></i> Send STK Push';
+        }
+    }
+
+    function startPolling(checkoutId) {
+        clearPolling();
+        let attempts = 0;
+        pollInterval = setInterval(async () => {
+            attempts++;
+            if (attempts > 20) { clearPolling(); showStep('stepFailed'); document.getElementById('failReason').textContent = 'Payment timed out. Please try again.'; return; }
+            try {
+                const data = await apiMpesaStatus(checkoutId);
+                if (data.status === 'COMPLETED') {
+                    clearPolling();
+                    document.getElementById('receiptBox').innerHTML =
+                        `<div class="receipt-row"><span class="rk">Receipt No.</span><span class="rv">${escapeHtml(data.receipt)}</span></div>` +
+                        `<div class="receipt-row"><span class="rk">Amount</span><span class="rv">KES ${escapeHtml(String(data.amount))}</span></div>` +
+                        `<div class="receipt-row"><span class="rk">Phone</span><span class="rv">${escapeHtml(data.phone)}</span></div>`;
+                    showStep('stepSuccess');
+                } else if (data.status === 'FAILED') {
+                    clearPolling();
+                    document.getElementById('failReason').textContent = 'Payment was cancelled or failed. You can try again.';
+                    showStep('stepFailed');
+                }
+            } catch(e) { /* keep polling */ }
+        }, 3000);
+    }
+
+    function startCountdown(seconds) {
+        clearInterval(countdownInterval);
+        let s = seconds;
+        countdownInterval = setInterval(() => {
+            s--;
+            const el = document.getElementById('countdown');
+            if (el) el.textContent = s;
+            if (s <= 0) { clearInterval(countdownInterval); }
+        }, 1000);
+    }
+
+    function clearPolling() {
+        clearInterval(pollInterval);
+        clearInterval(countdownInterval);
+        pollInterval = null;
+    }
+
+    function cancelWaiting() { clearPolling(); showStep('stepPhone'); }
+    function retryPayment()  { showStep('stepPhone'); }
+
     async function cancelBooking(id) {
         if (!confirm('Cancel this booking?')) return;
-        try { await apiCancelBooking(id); } catch(e) {}
+        try {
+            await apiCancelBooking(id);
+        } catch(e) {
+            alert(e.message || 'Connection error — could not cancel booking.');
+            return;
+        }
         loadBookings();
     }
 </script>

@@ -407,6 +407,7 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<script src="js/config.js"></script>
 <script src="js/api.js"></script>
 <script>
     // ── State ─────────────────────────────────────
@@ -414,6 +415,7 @@
     var userLat = -1.2864, userLon = 36.8172;
     var allSlots = [], currentFilter = 'ALL', currentRadius = 5;
     var heatmapOn = false, selectedSlot = null;
+    var nearbyAbort = null, nearbySeq = 0, mpesaPoll = null, wsSearchTimer = null;
 
     // ── Init ──────────────────────────────────────
     document.addEventListener('DOMContentLoaded', function() {
@@ -438,6 +440,14 @@
 
         // Modal backdrop clicks
         document.getElementById('bookModal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+        document.getElementById('slotList').addEventListener('click', function(e) {
+            var item = e.target.closest('.slot-item[data-slot-id]');
+            if (item) { openModal(item.dataset.slotId, item.dataset.area); return; }
+            var bookBtn = e.target.closest('[data-book-slot]');
+            if (bookBtn) { e.stopPropagation(); openModal(bookBtn.dataset.bookSlot, bookBtn.dataset.bookArea); return; }
+            var goBtn = e.target.closest('[data-go-slot]');
+            if (goBtn) { e.stopPropagation(); navigate(Number(goBtn.dataset.goLat), Number(goBtn.dataset.goLon), goBtn.dataset.goSlot); }
+        });
         document.getElementById('pnmModal').addEventListener('click',  function(e) { if (e.target === this) closePnm(); });
     });
 
@@ -508,14 +518,18 @@
 
     // ── Search ────────────────────────────────────
     async function searchNearby() {
+        if (nearbyAbort) nearbyAbort.abort();
+        nearbyAbort = new AbortController();
+        var seq = ++nearbySeq;
         var list = document.getElementById('slotList');
         list.innerHTML = '<div class="loading"><div class="spinner"></div><span style="font-size:0.82rem">Searching within ' + currentRadius + ' km...</span></div>';
         drawCircle();
 
         try {
             var url = API_BASE + '/api/slots/nearby?lat=' + userLat + '&lon=' + userLon + '&radius=' + currentRadius;
-            var res = await fetch(url);
+            var res = await fetch(url, { signal: nearbyAbort.signal });
             if (!res.ok) throw new Error('HTTP ' + res.status);
+            if (seq !== nearbySeq) return;
             allSlots = await res.json();
 
             document.getElementById('statFree').textContent = allSlots.filter(function(s){ return s.status==='FREE'; }).length;
@@ -528,6 +542,7 @@
             if (heatmapOn) { renderHeatmap(allSlots); markers.forEach(function(m){m.setOpacity(0.2);}); }
 
         } catch(err) {
+            if (err.name === 'AbortError') return;
             list.innerHTML = '<div class="loading">'
                 + '<i class="bi bi-wifi-off" style="font-size:1.8rem;color:var(--red)"></i>'
                 + '<span style="font-size:0.82rem;color:var(--red)">Cannot connect to server.<br>Is Spring Boot running?</span>'
@@ -574,27 +589,25 @@
 
         sorted.forEach(function(slot) {
             var st      = slot.status.toLowerCase();
-            var sid     = slot.slotId.replace(/'/g,"\\'");
-            var area    = (slot.parkingAreaName||'').replace(/'/g,"\\'");
             var dist    = slot.distanceKm != null ? slot.distanceKm + ' km' : '';
             var isFree  = slot.status === 'FREE';
 
             html += '<div class="slot-item ' + st + '"'
-                + (isFree ? ' onclick="openModal(\'' + sid + '\',\'' + area + '\')"' : '') + '>'
+                + (isFree ? ' data-slot-id="' + escapeHtml(slot.slotId) + '" data-area="' + escapeHtml(slot.parkingAreaName || '') + '" style="cursor:pointer"' : '') + '>'
                 + '<div class="slot-top">'
-                + '<div class="slot-id">' + slot.slotId + '</div>'
-                + '<span class="slot-badge badge-' + st + '">' + slot.status + '</span>'
+                + '<div class="slot-id">' + escapeHtml(slot.slotId) + '</div>'
+                + '<span class="slot-badge badge-' + st + '">' + escapeHtml(slot.status) + '</span>'
                 + '</div>'
                 + '<div class="slot-meta">'
-                + '<span><i class="bi bi-building"></i>' + (slot.parkingAreaName||'Parking') + '</span>'
+                + '<span><i class="bi bi-building"></i>' + escapeHtml(slot.parkingAreaName || 'Parking') + '</span>'
                 + (dist ? '<span><i class="bi bi-geo-alt"></i>' + dist + '</span>' : '')
                 + '</div>';
 
             if (isFree) {
                 html += '<div class="btn-pair">'
-                    + '<button class="book-btn" onclick="event.stopPropagation();openModal(\'' + sid + '\',\'' + area + '\')">'
+                    + '<button class="book-btn" data-book-slot="' + escapeHtml(slot.slotId) + '" data-book-area="' + escapeHtml(slot.parkingAreaName || '') + '">'
                     + '<i class="bi bi-p-square"></i> Book Now</button>'
-                    + '<button class="go-btn" onclick="event.stopPropagation();navigate(' + slot.latitude + ',' + slot.longitude + ',\'' + sid + '\')">'
+                    + '<button class="go-btn" data-go-lat="' + slot.latitude + '" data-go-lon="' + slot.longitude + '" data-go-slot="' + escapeHtml(slot.slotId) + '">'
                     + '<i class="bi bi-signpost-2"></i> Go</button>'
                     + '</div>';
             }
@@ -611,25 +624,33 @@
         slots.forEach(function(slot) {
             if (!slot.latitude || !slot.longitude) return;
             var color = slot.status==='FREE' ? '#22c55e' : slot.status==='OCCUPIED' ? '#ef4444' : '#f97316';
-            var html  = '<div style="background:' + color + ';color:white;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:700;font-family:Syne,sans-serif;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.5)">' + slot.slotId + '</div>';
-            var sid   = slot.slotId.replace(/'/g,"\\'");
-            var area  = (slot.parkingAreaName||'').replace(/'/g,"\\'");
+            var html  = '<div style="background:' + color + ';color:white;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:700;font-family:Syne,sans-serif;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.5)">' + escapeHtml(slot.slotId) + '</div>';
             var isFree = slot.status === 'FREE';
             var popup = '<div style="min-width:140px;padding:4px 0">'
-                + '<div style="font-family:Syne,sans-serif;font-weight:700;color:#F5C842;font-size:0.95rem;margin-bottom:3px">' + slot.slotId + '</div>'
-                + '<div style="color:#9a9ab0;font-size:0.75rem;margin-bottom:2px">📍 ' + (slot.parkingAreaName||'') + '</div>'
-                + (slot.distanceKm != null ? '<div style="color:#9a9ab0;font-size:0.75rem;margin-bottom:8px">📏 ' + slot.distanceKm + ' km away</div>' : '')
-                + '<div style="color:' + color + ';font-weight:600;font-size:0.8rem;margin-bottom:' + (isFree?'10px':'0') + '">' + slot.status + '</div>';
+                + '<div style="font-family:Syne,sans-serif;font-weight:700;color:#F5C842;font-size:0.95rem;margin-bottom:3px">' + escapeHtml(slot.slotId) + '</div>'
+                + '<div style="color:#9a9ab0;font-size:0.75rem;margin-bottom:2px">📍 ' + escapeHtml(slot.parkingAreaName || '') + '</div>'
+                + (slot.distanceKm != null ? '<div style="color:#9a9ab0;font-size:0.75rem;margin-bottom:8px">📏 ' + escapeHtml(String(slot.distanceKm)) + ' km away</div>' : '')
+                + '<div style="color:' + color + ';font-weight:600;font-size:0.8rem;margin-bottom:' + (isFree?'10px':'0') + '">' + escapeHtml(slot.status) + '</div>';
             if (isFree) {
                 popup += '<div style="display:flex;gap:5px">'
-                    + '<button onclick="openModal(\'' + sid + '\',\'' + area + '\')" style="flex:2;padding:6px;background:#F5C842;border:none;border-radius:7px;font-weight:700;cursor:pointer;font-size:0.8rem">Book</button>'
-                    + '<button onclick="navigate(' + slot.latitude + ',' + slot.longitude + ',\'' + sid + '\')" style="flex:1;padding:6px;background:#1A1A24;border:1px solid #2a2a38;border-radius:7px;color:#F0EDE8;cursor:pointer;font-size:0.8rem">Go</button>'
+                    + '<button class="map-book-btn" data-book-slot="' + escapeHtml(slot.slotId) + '" data-book-area="' + escapeHtml(slot.parkingAreaName || '') + '" style="flex:2;padding:6px;background:#F5C842;border:none;border-radius:7px;font-weight:700;cursor:pointer;font-size:0.8rem">Book</button>'
+                    + '<button class="map-go-btn" data-go-lat="' + slot.latitude + '" data-go-lon="' + slot.longitude + '" data-go-slot="' + escapeHtml(slot.slotId) + '" style="flex:1;padding:6px;background:#1A1A24;border:1px solid #2a2a38;border-radius:7px;color:#F0EDE8;cursor:pointer;font-size:0.8rem">Go</button>'
                     + '</div>';
             }
             popup += '</div>';
             var marker = L.marker([slot.latitude, slot.longitude], {
                 icon: L.divIcon({ html:html, className:'', iconAnchor:[30,12] })
             }).addTo(map).bindPopup(popup);
+            marker.on('popupopen', function() {
+                var pop = marker.getPopup().getElement();
+                if (!pop) return;
+                pop.querySelectorAll('.map-book-btn').forEach(function(btn) {
+                    btn.onclick = function() { openModal(btn.dataset.bookSlot, btn.dataset.bookArea); };
+                });
+                pop.querySelectorAll('.map-go-btn').forEach(function(btn) {
+                    btn.onclick = function() { navigate(Number(btn.dataset.goLat), Number(btn.dataset.goLon), btn.dataset.goSlot); };
+                });
+            });
             markers.push(marker);
         });
     }
@@ -695,15 +716,15 @@
             var steps    = route.legs[0].steps || [];
             var stepsHtml = steps.slice(0,8).map(function(step, i) {
                 var label = step.maneuver.type === 'depart' ? 'Start driving'
-                          : step.maneuver.type === 'arrive' ? 'Arrive at ' + slotId
-                          : step.name || step.maneuver.type;
+                          : step.maneuver.type === 'arrive' ? 'Arrive at ' + escapeHtml(slotId)
+                          : escapeHtml(step.name || step.maneuver.type);
                 return '<div class="nav-step"><div class="nav-step-num">' + (i+1) + '</div><div>' + label + '</div></div>';
             }).join('');
 
             document.getElementById('navSteps').innerHTML = stepsHtml || '<div style="color:var(--muted)">Follow the gold line</div>';
             document.getElementById('navDist').innerHTML  =
-                '<span><i class="bi bi-geo-alt-fill" style="color:var(--gold)"></i> ' + distKm + ' km to <b>' + slotId + '</b></span>'
-                + '<span><i class="bi bi-clock-fill" style="color:var(--gold)"></i> ~' + mins + ' min</span>';
+                '<span><i class="bi bi-geo-alt-fill" style="color:var(--gold)"></i> ' + escapeHtml(distKm) + ' km to <b>' + escapeHtml(slotId) + '</b></span>'
+                + '<span><i class="bi bi-clock-fill" style="color:var(--gold)"></i> ~' + escapeHtml(String(mins)) + ' min</span>';
 
         } catch(e) {
             // Fallback: straight line
@@ -712,7 +733,7 @@
             map.fitBounds(routeLine.getBounds(), { padding:[50,50] });
             var d = haversine(userLat, userLon, lat, lon).toFixed(1);
             document.getElementById('navSteps').innerHTML = '<div style="color:var(--orange);font-size:0.75rem"><i class="bi bi-exclamation-triangle"></i> Showing straight-line route</div>';
-            document.getElementById('navDist').innerHTML  = '<span><i class="bi bi-geo-alt-fill" style="color:var(--gold)"></i> ~' + d + ' km to <b>' + slotId + '</b></span>';
+            document.getElementById('navDist').innerHTML  = '<span><i class="bi bi-geo-alt-fill" style="color:var(--gold)"></i> ~' + escapeHtml(d) + ' km to <b>' + escapeHtml(slotId) + '</b></span>';
         }
     }
 
@@ -781,7 +802,10 @@
         setTimeout(function(){ document.getElementById('vehiclePlate').focus(); }, 100);
     }
 
-    function closeModal() { document.getElementById('bookModal').classList.remove('show'); }
+    function closeModal() {
+        if (mpesaPoll) { clearInterval(mpesaPoll); mpesaPoll = null; }
+        document.getElementById('bookModal').classList.remove('show');
+    }
 
     function goStep2() {
         var plate = document.getElementById('vehiclePlate').value.trim().toUpperCase();
@@ -820,45 +844,52 @@
 
         try {
             var bookData = await apiCreateBooking(selectedSlot, plate);
-            if (!bookData.success && !bookData.id) {
+            if (!bookData.success) {
                 showModalAlert(bookData.message || 'Booking failed. Slot may be taken.');
+                btn.style.opacity = ''; btn.style.pointerEvents = '';
+                btn.innerHTML = '<i class="bi bi-phone-fill"></i> Send M-Pesa Prompt';
                 return;
             }
-            var bookingId = bookData.id || bookData.bookingId;
-            var mpRes = await fetch(API_BASE + '/api/mpesa/pay', {
-                method:'POST', headers: authHeaders(),
-                body: JSON.stringify({ phone:phone, bookingId:bookingId, amount:50 })
-            });
-            var mpData = await mpRes.json();
-            if (!mpRes.ok || !mpData.checkoutId) {
-                closeModal(); toast('✅ ' + selectedSlot + ' booked! Pay at gate.', 'success'); searchNearby(); return;
+            var bookingId = bookData.bookingId;
+            var mpData = await apiMpesaPay(bookingId, phone);
+            if (!mpData.checkoutId) {
+                closeModal(); toast('✅ ' + selectedSlot + ' booked! Pay at gate.', 'success'); searchNearby();
+                btn.style.opacity = ''; btn.style.pointerEvents = '';
+                btn.innerHTML = '<i class="bi bi-phone-fill"></i> Send M-Pesa Prompt';
+                return;
             }
             var statusEl = document.getElementById('mpesaStatus');
             statusEl.style.display = 'flex';
+            btn.innerHTML = '<span style="width:13px;height:13px;border:2px solid rgba(0,0,0,0.3);border-top-color:#000;border-radius:50%;display:inline-block;animation:spin 0.6s linear infinite"></span> Waiting for payment...';
             var attempts = 0;
-            var poll = setInterval(async function() {
+            mpesaPoll = setInterval(async function() {
                 attempts++;
                 try {
-                    var sr   = await fetch(API_BASE + '/api/mpesa/status/' + mpData.checkoutId, { headers: authHeaders() });
-                    var sd   = await sr.json();
+                    var sd = await apiMpesaStatus(mpData.checkoutId);
                     if (sd.status==='COMPLETED' || sd.resultCode==='0') {
-                        clearInterval(poll); closeModal(); toast('✅ Payment received! ' + selectedSlot + ' booked.', 'success'); searchNearby();
+                        clearInterval(mpesaPoll); mpesaPoll = null;
+                        closeModal(); toast('✅ Payment received! ' + selectedSlot + ' booked.', 'success'); searchNearby();
+                        btn.style.opacity = ''; btn.style.pointerEvents = '';
+                        btn.innerHTML = '<i class="bi bi-phone-fill"></i> Send M-Pesa Prompt';
                     } else if (sd.status==='FAILED' || sd.resultCode==='1032') {
-                        clearInterval(poll); statusEl.style.display='none';
+                        clearInterval(mpesaPoll); mpesaPoll = null;
+                        statusEl.style.display='none';
                         showModalAlert('Payment cancelled. Slot reserved for 15 min.');
                         btn.innerHTML = '<i class="bi bi-phone-fill"></i> Retry Payment';
                         btn.style.opacity=''; btn.style.pointerEvents='';
                     } else if (attempts >= 12) {
-                        clearInterval(poll); closeModal(); toast('⏳ Payment pending. ' + selectedSlot + ' reserved.', 'success'); searchNearby();
+                        clearInterval(mpesaPoll); mpesaPoll = null;
+                        closeModal(); toast('⏳ Payment pending. ' + selectedSlot + ' reserved.', 'success'); searchNearby();
+                        btn.style.opacity = ''; btn.style.pointerEvents = '';
+                        btn.innerHTML = '<i class="bi bi-phone-fill"></i> Send M-Pesa Prompt';
                     } else {
                         document.getElementById('mpesaStatusText').textContent = 'Waiting... (' + (attempts*5) + 's)';
                     }
                 } catch(_) {}
             }, 5000);
         } catch(e) {
-            showModalAlert('Connection error. Is Spring Boot running?');
-        } finally {
-            if (btn.style.pointerEvents === 'none') { btn.style.opacity=''; btn.style.pointerEvents=''; }
+            showModalAlert(e.message || 'Connection error. Is Spring Boot running?');
+            btn.style.opacity = ''; btn.style.pointerEvents = '';
             btn.innerHTML = '<i class="bi bi-phone-fill"></i> Send M-Pesa Prompt';
         }
     }
@@ -868,7 +899,11 @@
         var w = document.getElementById('toastWrap');
         var t = document.createElement('div');
         t.className = 'toast ' + (type||'success');
-        t.innerHTML = '<i class="bi bi-' + (type==='error'?'exclamation-circle-fill':'check-circle-fill') + '" style="color:' + (type==='error'?'var(--red)':'var(--green)') + '"></i> ' + msg;
+        var icon = document.createElement('i');
+        icon.className = 'bi bi-' + (type==='error'?'exclamation-circle-fill':'check-circle-fill');
+        icon.style.color = type==='error' ? 'var(--red)' : 'var(--green)';
+        t.appendChild(icon);
+        t.appendChild(document.createTextNode(' ' + msg));
         w.appendChild(t);
         setTimeout(function(){ t.remove(); }, 4000);
     }
@@ -892,7 +927,8 @@
                         var u = JSON.parse(msg.body);
                         var e = u.status==='FREE' ? '🟢' : u.status==='RESERVED' ? '🟡' : '🔴';
                         toast(e + ' ' + u.slotId + ' → ' + u.status, 'success');
-                        searchNearby();
+                        if (wsSearchTimer) clearTimeout(wsSearchTimer);
+                        wsSearchTimer = setTimeout(searchNearby, 500);
                     });
                 },
                 function() { setTimeout(connectWS, 5000); }
